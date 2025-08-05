@@ -1,0 +1,87 @@
+anomaly_detection:
+  default_threshold: 0.8
+  max_anomalies: 1000
+  models:
+    isolation_forest:
+      enabled: true
+      contamination: 0.05
+      n_estimators: 100
+      max_samples: "auto"
+      random_state: 42
+    local_outlier_factor:
+      enabled: true
+      n_neighbors: 20
+      contamination: 0.05
+      algorithm: "auto"
+    one_class_svm:
+      enabled: true
+      nu: 0.05
+      kernel: "rbf"
+      gamma: "scale"
+    dbscan:
+      enabled: true
+      eps: 0.5
+      min_samples: 5
+      algorithm: "auto"
+    knn:
+      enabled: true
+      n_neighbors: 5
+      algorithm: "auto"
+      metric: "minkowski"
+    hdbscan:
+      enabled: false
+      min_cluster_size: 5
+      min_samples: null
+      alpha: 1.0
+    ensemble:
+      enabled: true
+      combination_method: "weighted_average"
+
+visualization:
+  color_theme: "blue"
+  max_points_scatter: 5000
+  max_nodes_network: 100
+  default_chart_height: 400
+
+reports:
+  output_dir: "reports"
+  include_charts: true
+  include_raw_data: false
+  default_format: "html"
+
+mitre:
+  techniques_file: "config/mitre_attack_data.json"
+  confidence_threshold: 0.6
+
+feedback:
+  storage_dir: "feedback"
+  use_feedback_for_training: true
+
+system:
+  cache_dir: "cache"
+  models_dir: "models"
+  data_dir: "data"
+  log_level: "INFO"
+
+# Single Data Source Configuration
+# For development: "C:\\Users\\justinchua\\Desktop\\newnewapp\\data"
+# For production: "/opt/arkime/json"
+data_source:
+  directory: "C:\\Users\\justinchua\\Desktop\\newnewapp\\data"
+  file_pattern: "*.json"
+  max_files: 100
+  recursive: true
+  polling_interval: 1  # seconds for real-time monitoring
+  auto_refresh: true
+
+# Monitoring and Alert Settings
+monitoring:
+  alerts:
+    default_threshold: 0.7
+    high_risk_threshold: 0.8
+    notification_delay: 5  # seconds between notifications
+  performance:
+    max_historical_points: 100
+    metrics_update_interval: 5  # seconds
+    max_buffer_size: 1000
+    retention_hours: 24

@@ -1,0 +1,42 @@
+# NDR Platform - Code Owners
+# This file defines who gets automatically requested for reviews
+# when pull requests modify specific files or directories
+
+# Global ownership - Shizukaax owns everything by default
+* @Shizukaax
+
+# Core application files
+/app/ @Shizukaax
+/core/ @Shizukaax
+/run.py @Shizukaax
+
+# Configuration and deployment
+/deployment/ @Shizukaax
+/config/ @Shizukaax
+/.env.example @Shizukaax
+/requirements.txt @Shizukaax
+
+# Scripts and utilities
+/scripts/ @Shizukaax
+/tools/ @Shizukaax
+
+# Documentation
+/docs/ @Shizukaax
+/.github/ @Shizukaax
+README.md @Shizukaax
+
+# Security-sensitive files
+/core/security_intelligence.py @Shizukaax
+/core/session_manager.py @Shizukaax
+/.github/workflows/ @Shizukaax
+/.github/SECURITY.md @Shizukaax
+
+# Model and data processing
+/core/model_manager.py @Shizukaax
+/core/data_manager.py @Shizukaax
+/core/auto_analysis.py @Shizukaax
+
+# Testing
+/tests/ @Shizukaax
+pytest.ini @Shizukaax
+test_*.py @Shizukaax

@@ -1,0 +1,258 @@
+# NDR Platform - Complete .gitignore
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# === Virtual Environments ===
+venv/
+env/
+ENV/
+.venv/
+.env/
+.virtualenv/
+.conda/
+
+# === Environment Variables ===
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# === IDE & Editor Files ===
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === Streamlit ===
+.streamlit/secrets.toml
+
+# === NDR Platform Specific ===
+
+# Data files (sensitive network data)
+data/*.json
+data/*.pcap
+data/*.log
+data/realtime/
+!data/examples/
+
+# Trained models (can be large)
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/backups/
+
+# Generated reports
+reports/*.pdf
+reports/*.xlsx
+reports/*.csv
+reports/*.html
+
+# Analysis results
+results/
+
+# User feedback data
+feedback/*.json
+
+# Application logs
+logs/*.log
+logs/*.log.*
+
+# Cache files
+cache/
+.cache/
+*.cache
+
+# Backup files
+*_backup_*
+*.backup
+*.bak
+
+# Security sensitive files
+private.key
+*.pem
+*.p12
+certificate.*
+
+# === Docker ===
+.dockerignore
+docker-compose.override.yml
+
+# === Testing ===
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# === Jupyter Notebooks ===
+.ipynb_checkpoints/
+*.ipynb
+
+# === Temporary Files ===
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# === Security ===
+# API keys and secrets
+*.key
+*.pem
+secrets/
+.secrets/
+
+# === Operating System ===
+# Windows
+*.exe
+*.msi
+*.dll
+*.lnk
+desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# === Machine Learning ===
+# Large datasets
+*.h5
+*.hdf5
+*.npz
+
+# Model checkpoints
+checkpoints/
+saved_models/
+
+# === Project Specific ===
+# Local configuration overrides
+config/local.yaml
+config/secrets.yaml
+
+# Development utilities
+dev-scripts/
+playground/
+scratch/
+
+# Backup files
+*.backup
+backup_*/
+
+# === Keep These Directories ===
+!cache/.gitkeep
+!data/.gitkeep
+!data/examples/
+!feedback/.gitkeep
+!logs/.gitkeep
+!models/.gitkeep
+!reports/.gitkeep
+!results/.gitkeep
+config/local_config.yaml
+
+# Data directories (sample and cache)
+data/
+cache/
+temp/
+tmp/
+
+# Model artifacts and results
+models/
+*.pkl
+*.joblib
+feedback/
+reports/
+results/
+
+# Documentation build
+docs/_build/
+docs/generated/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+tests/__pycache__/
+tests/*.pyc
+
+# Scripts cache
+scripts/__pycache__/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# OS-specific
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Docker
+.dockerignore
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Security
+*.key
+*.pem
+*.crt
+secrets/
+
+# Large files
+*.pcap
+*.cap
+*.dump

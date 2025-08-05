@@ -1,0 +1,79 @@
+# Core dependencies
+streamlit==1.28.1
+pandas==2.1.1
+numpy==1.24.3
+scikit-learn==1.3.0
+scipy==1.10.1
+
+# Configuration and YAML
+pyyaml==6.0.1
+
+# Visualization libraries
+plotly==5.16.1
+matplotlib==3.7.2
+seaborn==0.12.2
+networkx==3.1
+pyvis==0.3.2
+matplotlib-venn==0.11.9
+
+# Explainability tools
+shap==0.42.1
+lime==0.2.0.1
+
+# Feature engineering and preprocessing
+statsmodels==0.14.0
+category_encoders==2.6.1
+
+# Advanced models
+hdbscan==0.8.29
+tensorflow==2.13.0
+xgboost==1.7.6
+
+# Network and IP handling
+ipaddress==1.0.23
+geoip2==4.7.0
+requests==2.31.0
+
+# Security intelligence and threat feeds
+python-whois==0.8.0
+maxminddb==2.2.0
+
+# Time series analysis and prediction
+tsfresh==0.20.0
+sktime==0.21.0
+prophet==1.1.4
+
+# Report generation
+pdfkit==1.0.0
+xlsxwriter==3.1.0
+jinja2==3.1.2
+openpyxl==3.1.2
+markdown==3.4.4
+
+# Date handling
+python-dateutil==2.8.2
+
+# File monitoring and system utilities
+watchdog==3.0.0
+psutil==5.9.5
+
+# Additional utilities
+joblib==1.3.2
+tqdm==4.66.1
+uuid==1.30
+
+# Model persistence and data handling
+pickle-mixin==1.0.2
+
+# Additional utilities
+pathlib2==2.3.7
+collections-extended==2.0.2
+dataclasses==0.6
+
+# Docker and deployment
+gunicorn==20.1.0
+
+# Testing and development
+pytest==7.3.1
+black==23.3.0
+flake8==6.0.0

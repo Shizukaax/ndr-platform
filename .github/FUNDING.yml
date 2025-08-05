@@ -1,0 +1,18 @@
+# NDR Platform Funding Configuration
+# These are supported funding model platforms
+
+# GitHub Sponsors
+github: Shizukaax
+
+# Custom funding options
+custom: ["mailto:justinchua@tunglok.com"]
+
+# Uncomment and add if you set up other funding platforms:
+# patreon: your-patreon-username
+# open_collective: your-opencollective-name
+# ko_fi: your-kofi-username
+# tidelift: "npm/package-name"
+# community_bridge: project-name
+# liberapay: your-liberapay-username
+# issuehunt: your-issuehunt-username
+# otechie: your-otechie-username

@@ -1,0 +1,139 @@
+{
+  "techniques": [
+    {
+      "technique_id": "T1046",
+      "name": "Network Service Discovery",
+      "tactic": "Discovery",
+      "description": "Adversaries may attempt to get a listing of services running on remote hosts, including those that may be vulnerable to remote software exploitation."
+    },
+    {
+      "technique_id": "T1048",
+      "name": "Exfiltration Over Alternative Protocol",
+      "tactic": "Exfiltration",
+      "description": "Adversaries may steal data by exfiltrating it over a different protocol than that of the existing command and control channel."
+    },
+    {
+      "technique_id": "T1071",
+      "name": "Application Layer Protocol",
+      "tactic": "Command and Control",
+      "description": "Adversaries may use an existing, legitimate external Web service as a means for sending commands to and receiving output from a compromised system over the Web service channel."
+    },
+    {
+      "technique_id": "T1090",
+      "name": "Proxy",
+      "tactic": "Command and Control",
+      "description": "Adversaries may use a connection proxy to direct network traffic between systems or act as an intermediary for network communications to a command and control server."
+    },
+    {
+      "technique_id": "T1095",
+      "name": "Non-Application Layer Protocol",
+      "tactic": "Command and Control",
+      "description": "Adversaries may use a non-application layer protocol for communication between host and C2 server or among infected hosts within a network."
+    },
+    {
+      "technique_id": "T1190",
+      "name": "Exploit Public-Facing Application",
+      "tactic": "Initial Access",
+      "description": "Adversaries may exploit a vulnerability in an Internet-facing computer or program using software, data, or commands in order to cause unintended or unanticipated behavior."
+    },
+    {
+      "technique_id": "T1571",
+      "name": "Non-Standard Port",
+      "tactic": "Command and Control",
+      "description": "Adversaries may communicate using a protocol and port pairing that is typically not associated with the protocol."
+    },
+    {
+      "technique_id": "T1110",
+      "name": "Brute Force",
+      "tactic": "Credential Access",
+      "description": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained."
+    },
+    {
+      "technique_id": "T1021",
+      "name": "Remote Services",
+      "tactic": "Lateral Movement",
+      "description": "Adversaries may use valid accounts to log into a service remotely that accepts remote connections."
+    },
+    {
+      "technique_id": "T1021.004",
+      "name": "Remote Services: SSH",
+      "tactic": "Lateral Movement",
+      "description": "Adversaries may use SSH to move laterally within an environment."
+    },
+    {
+      "technique_id": "T1021.001",
+      "name": "Remote Services: Remote Desktop Protocol",
+      "tactic": "Lateral Movement",
+      "description": "Adversaries may use valid accounts to log into a computer using the Remote Desktop Protocol (RDP)."
+    },
+    {
+      "technique_id": "T1021.002",
+      "name": "Remote Services: SMB/Windows Admin Shares",
+      "tactic": "Lateral Movement",
+      "description": "Adversaries may use valid accounts to interact with remote network shares using Server Message Block (SMB)."
+    },
+    {
+      "technique_id": "T1059",
+      "name": "Command and Scripting Interpreter",
+      "tactic": "Execution",
+      "description": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries."
+    }
+  ],
+  "tactics": [
+    {
+      "tactic_id": "TA0001",
+      "name": "Initial Access",
+      "description": "The adversary is trying to get into your network."
+    },
+    {
+      "tactic_id": "TA0002",
+      "name": "Execution",
+      "description": "The adversary is trying to run malicious code."
+    },
+    {
+      "tactic_id": "TA0003",
+      "name": "Persistence",
+      "description": "The adversary is trying to maintain their foothold."
+    },
+    {
+      "tactic_id": "TA0004",
+      "name": "Privilege Escalation",
+      "description": "The adversary is trying to gain higher-level permissions."
+    },
+    {
+      "tactic_id": "TA0005",
+      "name": "Defense Evasion",
+      "description": "The adversary is trying to avoid being detected."
+    },
+    {
+      "tactic_id": "TA0006",
+      "name": "Credential Access",
+      "description": "The adversary is trying to steal account names and passwords."
+    },
+    {
+      "tactic_id": "TA0007",
+      "name": "Discovery",
+      "description": "The adversary is trying to figure out your environment."
+    },
+    {
+      "tactic_id": "TA0008",
+      "name": "Lateral Movement",
+      "description": "The adversary is trying to move through your environment."
+    },
+    {
+      "tactic_id": "TA0009",
+      "name": "Collection",
+      "description": "The adversary is trying to gather data of interest."
+    },
+    {
+      "tactic_id": "TA0010",
+      "name": "Exfiltration",
+      "description": "The adversary is trying to steal data."
+    },
+    {
+      "tactic_id": "TA0011",
+      "name": "Command and Control",
+      "description": "The adversary is trying to communicate with compromised systems to control them."
+    }
+  ]
+}

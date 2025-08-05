@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/Shizukaax/ndr-platform/tree/main/docs
+    about: Check our comprehensive documentation before reporting issues
+  - name: 💬 GitHub Discussions
+    url: https://github.com/Shizukaax/ndr-platform/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔒 Security Issues
+    url: mailto:justinchua@tunglok.com
+    about: Report security vulnerabilities privately via email
+  - name: 🆘 Get Support
+    url: https://github.com/Shizukaax/ndr-platform/blob/main/.github/SUPPORT.md
+    about: Learn how to get help with the NDR Platform
