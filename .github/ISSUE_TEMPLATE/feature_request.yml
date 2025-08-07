@@ -1,16 +1,20 @@
-name: 💡 Feature Request
-description: Suggest a new feature or enhancement
-title: "[Feature]: "
-labels: ["enhancement", "needs-triage"]
+name: 💡 Feature Request - NDR Platform v2.1.0
+description: Suggest a new feature or enhancement for the production platform
+title: "[Feature v2.1.0]: "
+labels: ["enhancement", "needs-triage", "v2.1.0"]
 assignees:
   - Shizukaax
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature! 💡
+        Thanks for suggesting a new feature for NDR Platform v2.1.0! 💡
         
         Please provide detailed information to help us understand your request.
+        
+        **Context**: This feature request is for the production-ready NDR Platform v2.1.0 
+        which includes critical fixes for NaN handling, Unicode encoding, Arrow serialization, 
+        and directory structure validation.
 
   - type: textarea
     id: problem
@@ -57,13 +61,15 @@ body:
       description: Which area does this feature relate to?
       options:
         - User Interface / UX
-        - Machine Learning / Analytics
-        - Data Processing
-        - Security / MITRE Integration
-        - Performance / Optimization
-        - API / Integration
-        - Documentation
-        - Deployment / DevOps
+        - Machine Learning / Analytics  
+        - Data Processing & Validation
+        - Security & MITRE Integration
+        - Performance & Optimization
+        - API & Integration
+        - Documentation & Guides
+        - Deployment & DevOps
+        - Critical Fixes & Stability
+        - Real-time Monitoring
         - Other
     validations:
       required: true

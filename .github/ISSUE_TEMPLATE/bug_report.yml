@@ -1,16 +1,21 @@
-name: 🐛 Bug Report
-description: Report a bug or unexpected behavior
-title: "[Bug]: "
-labels: ["bug", "needs-triage"]
+name: 🐛 Bug Report - NDR Platform v2.1.0
+description: Report a bug or unexpected behavior in the production-ready platform
+title: "[Bug v2.1.0]: "
+labels: ["bug", "needs-triage", "v2.1.0"]
 assignees:
   - Shizukaax
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug! 🐛
+        Thanks for taking the time to report a bug in NDR Platform v2.1.0! 🐛
         
         Please provide as much detail as possible to help us reproduce and fix the issue.
+        
+        **Before reporting**: Please run diagnostic tools and include their output:
+        - `python scripts/health_check.py`
+        - `python scripts/verify_structure.py`
+        - `python test_final_verification.py` (if relevant to the issue)
 
   - type: textarea
     id: description
@@ -49,13 +54,29 @@ body:
       label: Environment
       description: Please provide details about your environment
       placeholder: |
-        - OS: [e.g. Windows 10, Ubuntu 20.04, macOS 12.0]
+        - OS: [e.g. Windows 11, Ubuntu 22.04, macOS 13.0]
         - Python version: [e.g. 3.11.0]
-        - NDR Platform version: [e.g. 1.0.0]
-        - Browser: [e.g. Chrome 96.0, Firefox 95.0]
+        - NDR Platform version: [v2.1.0 Production]
+        - Browser: [e.g. Chrome 120.0, Firefox 119.0]
         - Docker version: [if using Docker]
     validations:
       required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic Output
+      description: Please run and include output from diagnostic tools
+      placeholder: |
+        Run these commands and paste the output:
+        ```bash
+        python scripts/health_check.py
+        python scripts/verify_structure.py
+        python test_final_verification.py  # if relevant
+        ```
+      render: shell
+    validations:
+      required: false
 
   - type: textarea
     id: logs
@@ -82,7 +103,9 @@ body:
           required: true
         - label: I have provided all the requested information
           required: true
-        - label: I have tested this with the latest version
+        - label: I have tested this with NDR Platform v2.1.0 (latest production version)
+          required: true
+        - label: I have run diagnostic tools and included relevant output
           required: false
 
   - type: textarea

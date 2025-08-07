@@ -1,4 +1,5 @@
-# NDR Platform Funding Configuration
+# NDR Platform v2.1.0 Funding Configuration
+# Support the development of the production-ready NDR Platform
 # These are supported funding model platforms
 
 # GitHub Sponsors
@@ -9,7 +10,7 @@ custom: ["mailto:justinchua@tunglok.com"]
 
 # Uncomment and add if you set up other funding platforms:
 # patreon: your-patreon-username
-# open_collective: your-opencollective-name
+# open_collective: your-opencollective-name  
 # ko_fi: your-kofi-username
 # tidelift: "npm/package-name"
 # community_bridge: project-name

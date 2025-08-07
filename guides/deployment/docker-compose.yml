@@ -1,16 +1,17 @@
 version: '3.8'
 
-# NDR Platform - Enhanced Network Detection & Response with Anomaly Tracking
+# NDR Platform v2.1.0 - Production-Ready Network Detection & Response
 # Author: Shizukaax <justinchua@tunglok.com>
 # Repository: https://github.com/Shizukaax/ndr-platform
-# Version: 2.1.0 - Enhanced with enterprise anomaly tracking
+# Version: 2.1.0 - Production ready with critical fixes applied
+# Critical Fixes: NaN handling, Unicode encoding, Arrow serialization, directory validation
 
 services:
   ndr-platform:
     build:
       context: ..
       dockerfile: guides/deployment/Dockerfile
-    container_name: ndr-platform
+    container_name: ndr-platform-v2.1.0
     ports:
       - "8501:8501"
     volumes:
@@ -19,10 +20,10 @@ services:
       - /opt/arkime/json:/app/data:ro  # Read-only access to Arkime JSON data
       - ./models:/app/models
       - ./logs:/app/logs
-      - ./results:/app/results
-      - ./feedback:/app/feedback
+      - ./results:/app/results  # ✅ CRITICAL: Fixed results saving compatibility
+      - ./feedback:/app/feedback  # ✅ CRITICAL: Fixed directory structure validation
       - ./config:/app/config
-      - ./cache:/app/cache  # 🆕 CRITICAL: Persistent anomaly tracking storage
+      - ./cache:/app/cache  # ✅ CRITICAL: Persistent anomaly tracking storage
       - ./reports:/app/reports
     environment:
       - PYTHONUNBUFFERED=1
@@ -32,11 +33,15 @@ services:
       - STREAMLIT_SERVER_ENABLE_CORS=false
       - STREAMLIT_SERVER_FILE_WATCHER_TYPE=none
       - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
-      # 🆕 Enhanced NDR Platform Environment Variables
+      # ✅ NDR Platform v2.1.0 Production Environment Variables
+      - NDR_VERSION=2.1.0
       - NDR_ANOMALY_STORAGE_DIR=/app/cache/anomalies
       - NDR_MODELS_DIR=/app/models
       - NDR_ENABLE_BASELINE_LEARNING=true
       - NDR_DEFAULT_MODEL_TYPE=ensemble
+      - NDR_ENABLE_UNICODE_VALIDATION=true  # ✅ CRITICAL: Unicode encoding fixes
+      - NDR_ENABLE_NAN_VALIDATION=true      # ✅ CRITICAL: NaN value protection
+      - NDR_ARROW_COMPATIBILITY_MODE=true   # ✅ CRITICAL: Arrow serialization fixes
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
