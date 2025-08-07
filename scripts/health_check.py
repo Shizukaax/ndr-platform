@@ -197,7 +197,7 @@ def check_configuration():
     config_files = [
         '.env',
         'config/config.yaml',
-        'docker-compose.yml',
+        'guides/deployment/docker-compose.yml',
         'requirements.txt'
     ]
     
