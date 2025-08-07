@@ -109,15 +109,12 @@ def show_auto_labeling():
             with col1:
                 force_retrain = st.checkbox("Force retrain existing models", value=False)
             with col2:
-                min_samples = st.slider("Minimum samples for training", min_value=5, max_value=50, value=10)
-            
-            # Update auto_labeler minimum samples
-            auto_labeler.min_samples = min_samples
+                min_samples = st.slider("Minimum samples for training", min_value=5, max_value=50, value=5)
             
             # Train models button
             if st.button("🚀 Train Auto-Labeling Models"):
                 with st.spinner("Training models..."):
-                    training_results = auto_labeler.train_models(force_retrain=force_retrain)
+                    training_results = auto_labeler.train_models(force_retrain=force_retrain, min_samples=min_samples)
                 
                 if training_results["status"] == "success":
                     st.success("✅ Models trained successfully!")
@@ -150,6 +147,18 @@ def show_auto_labeling():
         # Check if models are trained
         if 'auto_labeler' not in st.session_state:
             st.info("No trained models available. Please train models first in the 'Model Training' tab.")
+            
+            # Show a quick train button for convenience
+            if st.button("🚀 Quick Train Models"):
+                with st.spinner("Training models..."):
+                    training_result = auto_labeler.train_models(force_retrain=True)
+                    if training_result["status"] == "success":
+                        st.success("✅ Models trained successfully!")
+                        st.session_state.auto_labeler = auto_labeler
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Training failed: {training_result['message']}")
+                        st.info("💡 **Tip**: Ensure you have feedback data in the system.")
         else:
             auto_labeler = st.session_state.auto_labeler
             
@@ -164,9 +173,47 @@ def show_auto_labeling():
                 # Auto-label button
                 if st.button("🏷️ Generate Labels for All Anomalies"):
                     with st.spinner("Generating labels..."):
+                        # Ensure models are trained first
+                        if 'auto_labeler' not in st.session_state or not auto_labeler.models:
+                            st.info("Training models first...")
+                            training_result = auto_labeler.train_models(force_retrain=True)
+                            if training_result["status"] == "error":
+                                st.error(f"❌ Model training failed: {training_result['message']}")
+                                st.info("💡 **Tip**: Add more feedback data in the 'Model Explanation & Analyst Feedback' page to enable auto-labeling.")
+                                return
+                            else:
+                                st.success("✅ Models trained successfully!")
+                        
+                        # Generate labels
                         labeled_anomalies = auto_labeler.predict_labels(anomalies)
+                        
+                        # Verify that predictions were added
+                        prediction_cols = [col for col in labeled_anomalies.columns if col.startswith('predicted_')]
+                        confidence_cols = [col for col in labeled_anomalies.columns if 'confidence' in col]
+                        
+                        if not prediction_cols:
+                            st.warning("⚠️ No predictions were generated. This may be due to:")
+                            st.write("• Insufficient training data")
+                            st.write("• Missing required features in anomaly data")
+                            st.write("• Model training failure")
+                            st.info("💡 **Tip**: Check the Model Training tab for more details.")
+                            return
                     
                     st.success("✅ Labels generated successfully!")
+                    
+                    # Store labeled anomalies in session state immediately
+                    st.session_state.labeled_anomalies = labeled_anomalies
+                    st.session_state.auto_labeling_complete = True
+                
+                # Check if we have labeled anomalies (either just generated or from previous run)
+                if hasattr(st.session_state, 'labeled_anomalies') and st.session_state.labeled_anomalies is not None:
+                    labeled_anomalies = st.session_state.labeled_anomalies
+                    
+                    # Show status indicator
+                    if st.session_state.get('auto_labeling_complete'):
+                        st.success("✅ Auto-labeling completed! Results are persistent across interactions.")
+                    else:
+                        st.info("📊 Displaying previously generated labels.")
                     
                     # Show labeled anomalies
                     st.subheader("📊 Labeled Anomalies")
@@ -183,17 +230,313 @@ def show_auto_labeling():
                     else:
                         st.dataframe(labeled_anomalies, use_container_width=True)
                     
-                    # Store labeled anomalies
-                    st.session_state.labeled_anomalies = labeled_anomalies
+                    # Check if confidence columns exist before proceeding
+                    confidence_col = None
+                    possible_confidence_cols = [
+                        'predicted_true_positive_confidence',
+                        'predicted_category_confidence',
+                        'predicted_severity_confidence',
+                        'confidence',
+                        'prediction_confidence',
+                        'score'
+                    ]
                     
-                    # Download option
-                    csv = labeled_anomalies.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        "📥 Download Labeled Anomalies",
-                        data=csv,
-                        file_name=f"labeled_anomalies_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv"
-                    )
+                    for col in possible_confidence_cols:
+                        if col in labeled_anomalies.columns:
+                            confidence_col = col
+                            break
+                    
+                    if confidence_col is not None:
+                        # Confidence-based workflow
+                        st.subheader("🎯 Confirm Predictions")
+                        st.markdown("Review and confirm the auto-generated labels to improve future predictions.")
+                        
+                        # Confidence threshold for bulk confirmation
+                        confidence_threshold = st.slider(
+                            "Confidence threshold for bulk confirmation:",
+                            min_value=0.5,
+                            max_value=1.0,
+                            value=0.8,
+                            step=0.05,
+                            help="Predictions above this confidence will be auto-confirmed",
+                            key="confidence_threshold_slider"
+                        )
+                        
+                        # Count high-confidence predictions
+                        high_conf_count = len(labeled_anomalies[
+                            labeled_anomalies[confidence_col] >= confidence_threshold
+                        ])
+                        st.info(f"🎯 {high_conf_count} predictions above {confidence_threshold:.0%} confidence using column '{confidence_col}'")
+                    else:
+                        # Fallback workflow without confidence scores
+                        st.warning("⚠️ No confidence scores available in predictions. This may be due to insufficient training data or model training issues.")
+                        st.subheader("🎯 Review Predictions")
+                        st.markdown("Review and confirm the auto-generated labels to improve future predictions.")
+                        
+                        # Show available prediction columns for debugging
+                        pred_cols = [col for col in labeled_anomalies.columns if col.startswith('predicted_')]
+                        if pred_cols:
+                            st.info(f"Available prediction columns: {', '.join(pred_cols)}")
+                        else:
+                            st.warning("No prediction columns found. This suggests the auto-labeling models may not have been trained properly.")
+                        
+                        confidence_threshold = 0.8  # Default value
+                        confidence_col = None
+                    
+                    # Bulk confirmation options
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        confirm_key = f"confirm_high_conf_{len(labeled_anomalies)}"
+                        if confidence_col is not None:
+                            button_label = "✅ Confirm High-Confidence"
+                            button_help = "Accept all predictions above threshold"
+                        else:
+                            button_label = "✅ Confirm All Predictions"
+                            button_help = "Accept all auto-generated predictions"
+                        
+                        if st.button(button_label, key=confirm_key, help=button_help):
+                            # Add predictions as feedback
+                            if confidence_col is not None:
+                                # Filter by confidence
+                                high_conf_mask = labeled_anomalies[confidence_col] >= confidence_threshold
+                                confirm_anomalies = labeled_anomalies[high_conf_mask]
+                            else:
+                                # Confirm all predictions
+                                confirm_anomalies = labeled_anomalies
+                            
+                            confirmed_count = 0
+                            success_messages = []
+                            
+                            for idx, row in confirm_anomalies.iterrows():
+                                anomaly_id = f"auto_{idx}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                                
+                                # Extract prediction data safely
+                                is_true_positive = row.get('predicted_true_positive', True)
+                                if isinstance(is_true_positive, str):
+                                    is_true_positive = is_true_positive.lower() in ['true', 'yes', '1']
+                                
+                                confidence_score = row.get(confidence_col, 0.8) if confidence_col else 0.8
+                                
+                                feedback_data = {
+                                    "classification": "True Positive" if is_true_positive else "False Positive",
+                                    "priority": "High" if row.get('predicted_priority', False) else "Medium",
+                                    "technique": row.get('predicted_category', None),
+                                    "action_taken": "Auto-confirmed by AI",
+                                    "comments": f"Auto-confirmed with {confidence_score:.1%} confidence" if confidence_col else "Auto-confirmed (no confidence score)",
+                                    "analyst": "auto_labeler",
+                                    "anomaly_score": row.get('anomaly_score', 0),
+                                    "risk_score": 0,
+                                    "risk_level": "Medium"
+                                }
+                                
+                                try:
+                                    if feedback_manager.add_feedback(anomaly_id, feedback_data):
+                                        confirmed_count += 1
+                                        success_messages.append(f"Added feedback for anomaly {idx}")
+                                except Exception as e:
+                                    st.error(f"Error adding feedback for anomaly {idx}: {e}")
+                            
+                            if confirmed_count > 0:
+                                if confidence_col:
+                                    st.success(f"✅ Successfully confirmed {confirmed_count} high-confidence predictions!")
+                                else:
+                                    st.success(f"✅ Successfully confirmed {confirmed_count} predictions!")
+                                st.info("These predictions have been added to the feedback database for model training.")
+                                
+                                # Store recent activity for persistence
+                                if confidence_col:
+                                    confirmation_msg = f"Confirmed {confirmed_count} predictions with ≥{confidence_threshold:.0%} confidence at {datetime.now().strftime('%H:%M:%S')}"
+                                else:
+                                    confirmation_msg = f"Confirmed {confirmed_count} predictions at {datetime.now().strftime('%H:%M:%S')}"
+                                st.session_state.recent_confirmations = confirmation_msg
+                                
+                                # Show some details
+                                with st.expander("📋 Confirmation Details"):
+                                    for msg in success_messages[:5]:  # Show first 5
+                                        st.text(f"• {msg}")
+                                    if len(success_messages) > 5:
+                                        st.text(f"... and {len(success_messages) - 5} more")
+                            else:
+                                st.warning("⚠️ No predictions were confirmed. Please check the logs for errors.")
+                    
+                    with col2:
+                        review_key = f"review_low_conf_{len(labeled_anomalies)}"
+                        if confidence_col is not None:
+                            button_label = "🔍 Review Low-Confidence"
+                            button_help = "Show predictions that need manual review"
+                        else:
+                            button_label = "🔍 Review All Predictions"
+                            button_help = "Show all predictions for manual review"
+                        
+                        if st.button(button_label, key=review_key, help=button_help):
+                            # Filter and display predictions for review
+                            if confidence_col is not None:
+                                low_conf_mask = labeled_anomalies[confidence_col] < confidence_threshold
+                                review_anomalies = labeled_anomalies[low_conf_mask]
+                                
+                                if not review_anomalies.empty:
+                                    st.warning(f"⚠️ {len(review_anomalies)} predictions need manual review:")
+                                    
+                                    # Store in session state for persistence
+                                    st.session_state.low_confidence_predictions = review_anomalies
+                                    
+                                    # Display the predictions
+                                    st.dataframe(review_anomalies[show_cols] if show_cols else review_anomalies, use_container_width=True)
+                                    
+                                    st.info("💡 **Tip**: Review these in the 'Explain & Feedback' page to improve future predictions")
+                                    
+                                    # Add quick action buttons for low confidence items
+                                    st.markdown("**Quick Actions:**")
+                                    if st.button("📝 Take me to Explain & Feedback", key="goto_explain"):
+                                        # This would ideally switch to the explain page, but we can't do that directly
+                                        st.info("👆 Please navigate to the 'Explain & Feedback' page using the sidebar to review these predictions.")
+                                else:
+                                    st.success("🎉 All predictions are high-confidence!")
+                            else:
+                                # No confidence scores - show all predictions for review
+                                st.info(f"📊 All {len(labeled_anomalies)} predictions available for review:")
+                                
+                                # Store in session state for persistence
+                                st.session_state.low_confidence_predictions = labeled_anomalies
+                                
+                                # Display the predictions
+                                st.dataframe(labeled_anomalies[show_cols] if show_cols else labeled_anomalies, use_container_width=True)
+                                
+                                st.info("💡 **Tip**: Review these in the 'Explain & Feedback' page to improve future predictions")
+                                
+                                # Add quick action buttons
+                                st.markdown("**Quick Actions:**")
+                                if st.button("📝 Take me to Explain & Feedback", key="goto_explain_all"):
+                                    st.info("👆 Please navigate to the 'Explain & Feedback' page using the sidebar to review these predictions.")
+                    
+                    with col3:
+                        stats_key = f"show_stats_{len(labeled_anomalies)}"
+                        if st.button("📊 Prediction Summary", key=stats_key, help="Show detailed prediction statistics"):
+                            if confidence_col is not None:
+                                # Show comprehensive statistics
+                                st.subheader("📊 Prediction Statistics")
+                                
+                                total_predictions = len(labeled_anomalies)
+                                high_conf_count = len(labeled_anomalies[
+                                    labeled_anomalies[confidence_col] >= confidence_threshold
+                                ])
+                                low_conf_count = total_predictions - high_conf_count
+                                avg_confidence = labeled_anomalies[confidence_col].mean()
+                                
+                                col_a, col_b, col_c = st.columns(3)
+                                with col_a:
+                                    st.metric("Total Predictions", total_predictions)
+                                with col_b:
+                                    st.metric("High Confidence", high_conf_count, f"{high_conf_count/total_predictions:.1%}")
+                                with col_c:
+                                    st.metric("Avg Confidence", f"{avg_confidence:.1%}")
+                                
+                                # Confidence distribution
+                                st.markdown("**Confidence Distribution:**")
+                                confidence_bins = pd.cut(labeled_anomalies[confidence_col], 
+                                                       bins=[0, 0.5, 0.7, 0.8, 0.9, 1.0], 
+                                                       labels=['Very Low (0-50%)', 'Low (50-70%)', 'Medium (70-80%)', 'High (80-90%)', 'Very High (90-100%)'])
+                                confidence_counts = confidence_bins.value_counts().sort_index()
+                                
+                                for range_label, count in confidence_counts.items():
+                                    if count > 0:
+                                        percentage = count / total_predictions * 100
+                                        st.text(f"• {range_label}: {count} predictions ({percentage:.1f}%)")
+                            else:
+                                # Show basic statistics without confidence
+                                st.subheader("📊 Prediction Statistics")
+                                
+                                total_predictions = len(labeled_anomalies)
+                                
+                                col_a, col_b, col_c = st.columns(3)
+                                with col_a:
+                                    st.metric("Total Predictions", total_predictions)
+                                with col_b:
+                                    # Count true positives if available
+                                    true_pos_col = None
+                                    for col in ['predicted_true_positive', 'is_true_positive', 'classification']:
+                                        if col in labeled_anomalies.columns:
+                                            true_pos_col = col
+                                            break
+                                    
+                                    if true_pos_col:
+                                        try:
+                                            if labeled_anomalies[true_pos_col].dtype == bool:
+                                                true_positives = labeled_anomalies[true_pos_col].sum()
+                                            else:
+                                                true_positives = len(labeled_anomalies[labeled_anomalies[true_pos_col] == True])
+                                            st.metric("Predicted True Positives", true_positives)
+                                        except:
+                                            st.metric("Prediction Columns", len([col for col in labeled_anomalies.columns if col.startswith('predicted_')]))
+                                    else:
+                                        st.metric("Prediction Columns", len([col for col in labeled_anomalies.columns if col.startswith('predicted_')]))
+                                with col_c:
+                                    # Show unique categories if available
+                                    cat_col = None
+                                    for col in ['predicted_category', 'category', 'technique']:
+                                        if col in labeled_anomalies.columns:
+                                            cat_col = col
+                                            break
+                                    
+                                    if cat_col:
+                                        try:
+                                            unique_categories = labeled_anomalies[cat_col].nunique()
+                                            st.metric("Unique Categories", unique_categories)
+                                        except:
+                                            st.metric("Available Columns", len(labeled_anomalies.columns))
+                                    else:
+                                        st.metric("Available Columns", len(labeled_anomalies.columns))
+                                
+                                st.info("💡 **Note**: No confidence scores available. Consider training models with confidence prediction.")
+                                
+                                # Show column information
+                                st.markdown("**Available Prediction Columns:**")
+                                pred_cols = [col for col in labeled_anomalies.columns if col.startswith('predicted_')]
+                                if pred_cols:
+                                    for col in pred_cols:
+                                        st.text(f"• {col}")
+                                else:
+                                    st.text("• No prediction columns found")
+                    
+                    # Show recent confirmation activity if any
+                    if 'recent_confirmations' in st.session_state and st.session_state.recent_confirmations:
+                        st.info(f"✅ **Recent Activity**: {st.session_state.recent_confirmations}")
+                    
+                    # Show persistent low confidence results if they exist
+                    if 'low_confidence_predictions' in st.session_state and st.session_state.low_confidence_predictions is not None:
+                        st.subheader("⚠️ Low Confidence Predictions Requiring Review")
+                        low_conf_data = st.session_state.low_confidence_predictions
+                        st.dataframe(low_conf_data[show_cols] if show_cols else low_conf_data, use_container_width=True)
+                        st.info("💡 **Tip**: Review these in the 'Explain & Feedback' page to improve future predictions")
+                    
+                    # Download options
+                    st.subheader("💾 Export Options")
+                    
+                    col_download1, col_download2 = st.columns(2)
+                    
+                    with col_download1:
+                        # Download option
+                        csv = labeled_anomalies.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            "📥 Download Labeled Anomalies",
+                            data=csv,
+                            file_name=f"labeled_anomalies_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv"
+                        )
+                    
+                    with col_download2:
+                        # Clear results button
+                        if st.button("🗑️ Clear Results", help="Clear the current labeling results"):
+                            if 'labeled_anomalies' in st.session_state:
+                                del st.session_state.labeled_anomalies
+                            if 'auto_labeling_complete' in st.session_state:
+                                del st.session_state.auto_labeling_complete
+                            if 'recent_confirmations' in st.session_state:
+                                del st.session_state.recent_confirmations
+                            if 'low_confidence_predictions' in st.session_state:
+                                del st.session_state.low_confidence_predictions
+                            st.rerun()
             else:
                 st.info("No anomalies detected. Please run anomaly detection first.")
     

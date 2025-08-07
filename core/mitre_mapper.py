@@ -32,7 +32,7 @@ class MitreMapper:
         """
         try:
             if os.path.exists(self.mitre_data_path):
-                with open(self.mitre_data_path, 'r') as f:
+                with open(self.mitre_data_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             else:
                 print(f"MITRE data file not found: {self.mitre_data_path}")

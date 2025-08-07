@@ -52,8 +52,7 @@ def fix_model_thresholds_ui(model_manager):
         
         with col1:
             # Get model types for selection
-            models = model_manager.list_models()
-            model_types = [model["type"] for model in models]
+            model_types = model_manager.list_models()
             
             selected_model = st.selectbox(
                 "Select model to fix threshold",
@@ -119,7 +118,9 @@ def show_model_management():
         fix_model_thresholds_ui(model_manager)
         
         # Display models in a table for easy comparison
-        model_data = extract_parameter_data(models)
+        # Get detailed model information for the table
+        detailed_models = model_manager.list_models()
+        model_data = extract_parameter_data(detailed_models)
         # Convert 'N/A' strings to actual N/A values to avoid Arrow serialization issues
         for col in model_data.columns:
             model_data[col] = model_data[col].apply(lambda x: np.nan if x == 'N/A' else x)

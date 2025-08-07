@@ -25,8 +25,29 @@ startup_logger = get_logger("app_startup")
 if not hasattr(setup_logging, '_startup_logged'):
     startup_logger.info("Starting Network Anomaly Detection Platform")
     
-    # Create necessary directories
-    directories = ["data", "models", "logs", "feedback", "cache", "config", "app/assets"]
+    # Import config to get proper directory paths
+    try:
+        from core.config_loader import load_config
+        config = load_config()
+        
+        # Create directories based on configuration
+        directories = [
+            config.get('system', {}).get('data_dir', 'data'),
+            config.get('system', {}).get('models_dir', 'models'),
+            config.get('system', {}).get('cache_dir', 'cache'),
+            config.get('system', {}).get('reports_dir', 'data/reports'),
+            config.get('system', {}).get('results_dir', 'data/results'),
+            config.get('feedback', {}).get('storage_dir', 'data/feedback'),
+            config.get('anomaly_storage', {}).get('history_dir', 'data/anomaly_history'),
+            "logs",
+            "config", 
+            "app/assets"
+        ]
+    except Exception as e:
+        startup_logger.warning(f"Could not load config, using default directories: {e}")
+        # Fallback to default directories if config fails
+        directories = ["data", "models", "logs", "data/feedback", "cache", "config", "app/assets"]
+    
     created_dirs = []
     for directory in directories:
         dir_path = Path(project_root, directory)

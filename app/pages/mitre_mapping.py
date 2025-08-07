@@ -17,37 +17,54 @@ from core.notification_service import notification_service
 def show_mitre_mapping():
     """Display the MITRE ATT&CK mapping page."""
     
-    st.header("🛡️ MITRE ATT&CK Mapping")
-    st.markdown("**Automatic mapping of detected anomalies to MITRE ATT&CK techniques and tactics.**")
-    
-    # Check if anomalies are detected
-    if 'anomalies' not in st.session_state or st.session_state.anomalies is None:
-        st.info("No anomalies detected. Please run anomaly detection first.")
+    try:
+        st.header("🛡️ MITRE ATT&CK Mapping")
+        st.markdown("**Automatic mapping of detected anomalies to MITRE ATT&CK techniques and tactics.**")
+        
+        # Check if anomalies are detected
+        if 'anomalies' not in st.session_state or st.session_state.anomalies is None:
+            st.info("No anomalies detected. Please run anomaly detection first.")
+            return
+        
+        # Get anomalies
+        anomalies = st.session_state.anomalies
+        
+        # Additional check for empty anomalies
+        if isinstance(anomalies, pd.DataFrame) and anomalies.empty:
+            st.info("No anomalies detected. Please run anomaly detection first.")
+            return
+        elif not isinstance(anomalies, pd.DataFrame):
+            st.error("Invalid anomalies data. Please re-run anomaly detection.")
+            return
+        
+        # Initialize MITRE mapper
+        mitre_mapper = MitreMapper()
+        
+        # Check if automatic mapping was already done
+        auto_mapped = st.session_state.get('mitre_auto_mapped', False)
+        existing_mappings = st.session_state.get('mitre_mappings')
+        
+        # Validate existing mappings format
+        if existing_mappings is not None:
+            if not isinstance(existing_mappings, dict):
+                st.warning("⚠️ Invalid mapping data format detected. Clearing existing mappings.")
+                st.session_state.mitre_mappings = None
+                st.session_state.mitre_auto_mapped = False
+                existing_mappings = None
+                auto_mapped = False
+        
+        if auto_mapped and existing_mappings:
+            st.success("🤖 **Automatic MITRE mapping completed!** Results are displayed below.")
+            st.info("💡 **Tip:** This mapping was generated automatically during anomaly detection. You can re-run with different settings if needed.")
+        else:
+            st.info("⚠️ **No automatic mapping found.** Please run the mapping analysis below.")
+            
+    except Exception as e:
+        st.error(f"Error in MITRE mapping initialization: {str(e)}")
+        st.error("Please check the logs for more details.")
+        import traceback
+        st.code(traceback.format_exc())
         return
-    
-    # Get anomalies
-    anomalies = st.session_state.anomalies
-    
-    # Additional check for empty anomalies
-    if isinstance(anomalies, pd.DataFrame) and anomalies.empty:
-        st.info("No anomalies detected. Please run anomaly detection first.")
-        return
-    elif not isinstance(anomalies, pd.DataFrame):
-        st.error("Invalid anomalies data. Please re-run anomaly detection.")
-        return
-    
-    # Initialize MITRE mapper
-    mitre_mapper = MitreMapper()
-    
-    # Check if automatic mapping was already done
-    auto_mapped = st.session_state.get('mitre_auto_mapped', False)
-    existing_mappings = st.session_state.get('mitre_mappings')
-    
-    if auto_mapped and existing_mappings:
-        st.success("🤖 **Automatic MITRE mapping completed!** Results are displayed below.")
-        st.info("💡 **Tip:** This mapping was generated automatically during anomaly detection. You can re-run with different settings if needed.")
-    else:
-        st.info("⚠️ **No automatic mapping found.** Please run the mapping analysis below.")
     
     # Create tabs
     tab1, tab2, tab3 = st.tabs(["🎯 Technique Mapping", "📊 Tactics Overview", "⚙️ Custom Rules"])
@@ -60,43 +77,59 @@ def show_mitre_mapping():
         if existing_mappings:
             st.markdown("### 📋 Current Mapping Results")
             
-            # Count techniques and tactics
-            technique_counts = mitre_mapper.get_technique_counts(existing_mappings)
-            tactic_counts = mitre_mapper.get_tactic_counts(existing_mappings)
-            
-            # Show summary metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("🔍 Mapped Anomalies", len(existing_mappings))
-            with col2:
-                st.metric("🎯 Unique Techniques", len(technique_counts))
-            with col3:
-                st.metric("📊 Unique Tactics", len(tactic_counts))
-            with col4:
-                total_mappings = sum(len(mappings) for mappings in existing_mappings.values())
-                st.metric("🔗 Total Mappings", total_mappings)
+            try:
+                # Count techniques and tactics with error handling
+                technique_counts = mitre_mapper.get_technique_counts(existing_mappings)
+                tactic_counts = mitre_mapper.get_tactic_counts(existing_mappings)
+                
+                # Show summary metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("🔍 Mapped Anomalies", len(existing_mappings))
+                with col2:
+                    st.metric("🎯 Unique Techniques", len(technique_counts))
+                with col3:
+                    st.metric("📊 Unique Tactics", len(tactic_counts))
+                with col4:
+                    total_mappings = sum(len(mappings) for mappings in existing_mappings.values() if mappings)
+                    st.metric("🔗 Total Mappings", total_mappings)
+                
+            except Exception as e:
+                st.error(f"Error processing mapping data: {str(e)}")
+                st.info("Mapping data may be in an unexpected format. Please re-run the mapping analysis.")
+                # Clear invalid mappings
+                st.session_state.mitre_mappings = None
+                st.session_state.mitre_auto_mapped = False
+                existing_mappings = None
             
             # Show technique distribution
-            if technique_counts:
-                st.markdown("#### 🎯 Technique Distribution")
-                
-                technique_df = pd.DataFrame({
-                    'Technique': list(technique_counts.keys()),
-                    'Count': list(technique_counts.values())
-                })
-                
-                # Create bar chart
-                fig = px.bar(
-                    technique_df.head(10), 
-                    x='Count', 
-                    y='Technique',
-                    orientation='h',
-                    title="Top 10 MITRE ATT&CK Techniques",
-                    color='Count',
-                    color_continuous_scale='Reds'
-                )
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+            if existing_mappings and technique_counts:
+                try:
+                    st.markdown("#### 🎯 Technique Distribution")
+                    
+                    technique_df = pd.DataFrame({
+                        'Technique': list(technique_counts.keys()),
+                        'Count': list(technique_counts.values())
+                    })
+                    
+                    if not technique_df.empty:
+                        # Create bar chart
+                        fig = px.bar(
+                            technique_df.head(10), 
+                            x='Count', 
+                            y='Technique',
+                            orientation='h',
+                            title="Top 10 MITRE ATT&CK Techniques",
+                            color='Count',
+                            color_continuous_scale='Reds'
+                        )
+                        fig.update_layout(height=400)
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("No technique data available for visualization.")
+                except Exception as e:
+                    st.error(f"Error creating technique chart: {str(e)}")
+                    st.info("Unable to display technique distribution chart.")
         
         # Re-mapping section
         with st.expander("🔄 **Re-run Mapping with Different Settings**", expanded=not bool(existing_mappings)):

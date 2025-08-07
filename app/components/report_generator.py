@@ -13,6 +13,7 @@ import json
 import tempfile
 import base64
 import matplotlib.pyplot as plt
+from core.config_loader import load_config
 from io import BytesIO
 import jinja2
 import uuid
@@ -150,12 +151,14 @@ def generate_pdf_report(html_content, output_path=None):
         }
         
         if output_path is None:
-            # Create reports directory if it doesn't exist
-            os.makedirs("reports", exist_ok=True)
+            # Get reports directory from config
+            config = load_config()
+            reports_dir = config.get('system', {}).get('reports_dir', 'data/reports')
+            os.makedirs(reports_dir, exist_ok=True)
             
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_path = f"reports/report_{timestamp}.pdf"
+            output_path = f"{reports_dir}/report_{timestamp}.pdf"
         
         # Generate PDF
         pdfkit.from_string(html_content, output_path, options=options)

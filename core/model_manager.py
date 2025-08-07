@@ -31,21 +31,30 @@ class ModelManager:
     
     def __init__(self, models_dir=None, data_dir=None, results_dir=None):
         """
-        Initialize the model manager.
+        Initialize the model manager with config-aware paths.
         
         Args:
             models_dir (str, optional): Directory to store models
             data_dir (str, optional): Directory where input data is stored
             results_dir (str, optional): Directory to store analysis results
         """
+        # Import config loader to get default paths
+        try:
+            from core.config_loader import load_config
+            config = load_config()
+        except Exception as e:
+            logger.warning(f"Could not load config: {e}. Using default paths.")
+            config = {}
+        
+        # Use config paths by default, fall back to provided or hardcoded paths
         if models_dir is None:
-            models_dir = os.path.join(os.getcwd(), "models")
+            models_dir = config.get('system', {}).get('models_dir', 'models')
         
         if data_dir is None:
-            data_dir = os.path.join(os.getcwd(), "data")
+            data_dir = config.get('system', {}).get('data_dir', 'data')
             
         if results_dir is None:
-            results_dir = os.path.join(os.getcwd(), "results")
+            results_dir = config.get('system', {}).get('results_dir', 'data/results')
         
         self.models_dir = models_dir
         self.data_dir = data_dir
@@ -79,7 +88,7 @@ class ModelManager:
             
             # Check if directory is writable
             test_file = os.path.join(directory, f"test_write_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tmp")
-            with open(test_file, 'w') as f:
+            with open(test_file, 'w', encoding='utf-8') as f:
                 f.write("Test write")
             
             # Clean up test file
@@ -300,8 +309,8 @@ class ModelManager:
             serializable_metadata = self._make_json_serializable(model.metadata)
             
             # Save metadata separately
-            with open(metadata_path, "w") as f:
-                json.dump(serializable_metadata, f, indent=2)
+            with open(metadata_path, "w", encoding='utf-8') as f:
+                json.dump(serializable_metadata, f, indent=2, ensure_ascii=False)
             
             logger.info(f"{model_type} model updated successfully at {model_path}")
             
@@ -326,8 +335,8 @@ class ModelManager:
                 alt_metadata_path = os.path.splitext(alt_path)[0] + "_metadata.json"
                 serializable_metadata = self._make_json_serializable(model.metadata)
                 
-                with open(alt_metadata_path, "w") as f:
-                    json.dump(serializable_metadata, f, indent=2)
+                with open(alt_metadata_path, "w", encoding='utf-8') as f:
+                    json.dump(serializable_metadata, f, indent=2, ensure_ascii=False)
                 
                 logger.info(f"{model_type} model saved to alternative location: {alt_path}")
                 return alt_path
@@ -437,7 +446,7 @@ class ModelManager:
                             backup_metadata_path = os.path.splitext(newest_backup)[0] + "_metadata.json"
                             if os.path.exists(backup_metadata_path):
                                 try:
-                                    with open(backup_metadata_path, "r") as f:
+                                    with open(backup_metadata_path, "r", encoding='utf-8') as f:
                                         metadata = json.load(f)
                                         if 'anomaly_threshold' in metadata:
                                             self._threshold_cache[model_type] = metadata['anomaly_threshold']
@@ -462,7 +471,7 @@ class ModelManager:
                     alt_metadata_path = os.path.splitext(alt_path)[0] + "_metadata.json"
                     if os.path.exists(alt_metadata_path):
                         try:
-                            with open(alt_metadata_path, "r") as f:
+                            with open(alt_metadata_path, "r", encoding='utf-8') as f:
                                 metadata = json.load(f)
                                 if 'anomaly_threshold' in metadata:
                                     self._threshold_cache[model_type] = metadata['anomaly_threshold']
@@ -526,7 +535,7 @@ class ModelManager:
         metadata = {}
         if os.path.exists(metadata_path):
             try:
-                with open(metadata_path, "r") as f:
+                with open(metadata_path, "r", encoding='utf-8') as f:
                     metadata = json.load(f)
             except Exception as e:
                 logger.warning(f"Could not load metadata for {model_type}: {str(e)}")
@@ -575,7 +584,7 @@ class ModelManager:
                         
                         if os.path.exists(metadata_path):
                             try:
-                                with open(metadata_path, "r") as f:
+                                with open(metadata_path, "r", encoding='utf-8') as f:
                                     metadata = json.load(f)
                             except Exception as e:
                                 logger.warning(f"Could not load metadata for {file}: {str(e)}")
@@ -615,7 +624,7 @@ class ModelManager:
                         
                         if os.path.exists(metadata_path):
                             try:
-                                with open(metadata_path, "r") as f:
+                                with open(metadata_path, "r", encoding='utf-8') as f:
                                     metadata = json.load(f)
                             except Exception as e:
                                 logger.warning(f"Could not load metadata for {file}: {str(e)}")
@@ -838,6 +847,7 @@ class ModelManager:
             "scores": scores,
             "threshold": threshold,
             "anomalies": anomalies,
+            "anomaly_indices": anomaly_indices,  # Add this missing key
             "features": matching_features,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "analysis_time": analysis_time,
@@ -857,7 +867,7 @@ class ModelManager:
                 anomalies_path = os.path.join(results_dir, f"anomalies_{timestamp}.csv")
                 
                 if len(anomalies) > 0:
-                    anomalies.to_csv(anomalies_path, index=False)
+                    anomalies.to_csv(anomalies_path, index=False, encoding='utf-8')
                     logger.info(f"Saved {len(anomalies)} anomalies to {anomalies_path}")
                 
                 # Save summary as JSON
@@ -874,8 +884,8 @@ class ModelManager:
                 }
                 
                 summary_path = os.path.join(results_dir, f"summary_{timestamp}.json")
-                with open(summary_path, "w") as f:
-                    json.dump(summary, f, indent=2)
+                with open(summary_path, "w", encoding='utf-8') as f:
+                    json.dump(summary, f, indent=2, ensure_ascii=False)
                     
                 logger.info(f"Saved analysis summary to {summary_path}")
                 

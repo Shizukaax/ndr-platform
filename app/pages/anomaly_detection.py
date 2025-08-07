@@ -255,9 +255,6 @@ def display_confidence_level(anomaly_score: float, threshold: float):
             confidence_level = "Normal Behavior"
             confidence_percent = max(30 - distance_below * 10, 5.0)
             color = "green"
-        confidence_level = "Normal Behavior"
-        confidence_percent = max(30 - distance_below * 10, 5.0)
-        color = "green"
     
     # Create columns for display
     col1, col2 = st.columns([1, 2])
@@ -664,7 +661,54 @@ def show_anomaly_detection():
                     elif algorithm == "HDBSCAN":
                         model = HDBSCANDetector(**model_params)
                     elif algorithm == "Ensemble":
-                        model = EnsembleDetector(**model_params)
+                        # Create actual model instances for ensemble
+                        ensemble_models = []
+                        
+                        # Create the individual models based on selected options
+                        if use_isolation_forest:
+                            from core.models.isolation_forest import IsolationForestDetector
+                            if_model = IsolationForestDetector(
+                                n_estimators=100,
+                                contamination=contamination,
+                                random_state=42
+                            )
+                            ensemble_models.append(if_model)
+                        
+                        if use_lof:
+                            from core.models.local_outlier_factor import LocalOutlierFactorDetector
+                            lof_model = LocalOutlierFactorDetector(
+                                n_neighbors=20,
+                                contamination=contamination,
+                                novelty=True
+                            )
+                            ensemble_models.append(lof_model)
+                        
+                        if use_ocsvm:
+                            from core.models.one_class_svm import OneClassSVMDetector
+                            svm_model = OneClassSVMDetector(
+                                nu=contamination,
+                                gamma="scale"
+                            )
+                            ensemble_models.append(svm_model)
+                        
+                        if use_knn:
+                            from core.models.knn import KNNDetector
+                            knn_model = KNNDetector(
+                                n_neighbors=20,
+                                contamination=contamination
+                            )
+                            ensemble_models.append(knn_model)
+                        
+                        # Create the ensemble with actual model instances
+                        if ensemble_models:
+                            model = EnsembleDetector(
+                                models=ensemble_models,
+                                contamination=contamination,
+                                combination_method=ensemble_method
+                            )
+                        else:
+                            st.error("Please select at least one model for the ensemble.")
+                            return
                     
                     # Set feature names
                     model.feature_names = selected_features
@@ -676,29 +720,48 @@ def show_anomaly_detection():
                     
                     st.success(f"✅ **Created and trained new {algorithm} model**")
                 
-                # Generate anomaly scores
-                status_text.text("Detecting anomalies...")
+                # Apply model to data and save results using ModelManager
+                status_text.text("Applying model and saving results...")
                 progress_bar.progress(60)
                 
-                scores = model.predict(X)
-                
-                # Determine threshold based on contamination
-                threshold = np.percentile(scores, 100 * (1 - contamination))
-                
-                # Identify anomalies based on algorithm type
-                if algorithm == "Isolation Forest":
-                    # For Isolation Forest: lower scores = more anomalous
-                    is_anomaly = scores < threshold
-                else:
-                    # For other algorithms: higher scores = more anomalous  
-                    is_anomaly = scores > threshold
+                # Use ModelManager's apply_model_to_data method which handles everything
+                try:
+                    results = model_manager.apply_model_to_data(
+                        model_type=model_type_name,
+                        data=df,  # Use full dataframe, not just X
+                        feature_names=selected_features,
+                        recalculate_threshold=False,  # Use existing threshold
+                        save_results=True  # This will save to data/results
+                    )
                     
-                anomaly_indices = np.where(is_anomaly)[0]
-                anomalies = X.iloc[anomaly_indices].copy() if len(anomaly_indices) > 0 else pd.DataFrame()
-                
-                # Add anomaly scores
-                if len(anomalies) > 0:
-                    anomalies['anomaly_score'] = scores[anomaly_indices]
+                    # Extract results
+                    scores = results['scores']
+                    threshold = results['threshold'] 
+                    anomalies = results['anomalies']
+                    anomaly_indices = results['anomaly_indices']
+                    
+                    st.success(f"✅ **Results saved to {results.get('results_path', 'data/results')}**")
+                    
+                except Exception as e:
+                    logger.error(f"Error using apply_model_to_data: {e}")
+                    st.warning(f"Could not save results automatically: {e}")
+                    
+                    # Fallback to manual prediction (without saving)
+                    scores = model.predict(X)
+                    threshold = np.percentile(scores, 100 * (1 - contamination))
+                    
+                    # Identify anomalies based on algorithm type
+                    if algorithm == "Isolation Forest":
+                        is_anomaly = scores < threshold
+                    else:
+                        is_anomaly = scores > threshold
+                        
+                    anomaly_indices = np.where(is_anomaly)[0]
+                    anomalies = X.iloc[anomaly_indices].copy() if len(anomaly_indices) > 0 else pd.DataFrame()
+                    
+                    # Add anomaly scores
+                    if len(anomalies) > 0:
+                        anomalies['anomaly_score'] = scores[anomaly_indices]
                 
                 # Save the model
                 status_text.text("Saving model...")

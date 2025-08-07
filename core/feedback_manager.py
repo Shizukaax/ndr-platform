@@ -8,17 +8,31 @@ import json
 import pandas as pd
 from datetime import datetime
 import uuid
+import logging
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 class FeedbackManager:
     """Manages collection and storage of user feedback on anomalies."""
     
-    def __init__(self, storage_dir="feedback"):
+    def __init__(self, storage_dir=None):
         """
-        Initialize the feedback manager.
+        Initialize the feedback manager with config-aware paths.
         
         Args:
-            storage_dir (str): Directory to store feedback data
+            storage_dir (str, optional): Directory to store feedback data
         """
+        # Load config to get proper paths
+        if storage_dir is None:
+            try:
+                from core.config_loader import load_config
+                config = load_config()
+                storage_dir = config.get('feedback', {}).get('storage_dir', 'data/feedback')
+            except Exception as e:
+                logger.warning(f"Could not load config: {e}. Using default path.")
+                storage_dir = 'data/feedback'
+        
         self.storage_dir = storage_dir
         self.feedback_file = os.path.join(storage_dir, "feedback.json")
         self.session_feedback = {}
@@ -88,14 +102,15 @@ class FeedbackManager:
     def get_feedback_dataframe(self):
         """
         Get all feedback as a pandas DataFrame.
+        Consolidates feedback from main file and dated backup files.
         
         Returns:
             pd.DataFrame: Feedback data
         """
-        # Load all feedback
+        # Load feedback from main file
         all_feedback = self._load_feedback()
         
-        # Convert to DataFrame
+        # Convert main feedback to DataFrame
         records = []
         
         for anomaly_id, feedback in all_feedback.items():
@@ -109,6 +124,35 @@ class FeedbackManager:
                 record[key] = value
             
             records.append(record)
+        
+        # Load feedback from dated files
+        import glob
+        dated_files = glob.glob(os.path.join(self.storage_dir, "feedback_20*.json"))
+        
+        for dated_file in dated_files:
+            try:
+                with open(dated_file, 'r', encoding='utf-8') as f:
+                    dated_data = json.load(f)
+                    
+                # Handle different formats
+                if "feedback" in dated_data and isinstance(dated_data["feedback"], list):
+                    for feedback_entry in dated_data["feedback"]:
+                        record = {
+                            "anomaly_id": feedback_entry.get("anomaly_id", f"dated_{len(records)}"),
+                            "feedback_time": feedback_entry.get("timestamp", ""),
+                            "classification": feedback_entry.get("classification", ""),
+                            "priority": feedback_entry.get("priority", ""),
+                            "technique": feedback_entry.get("technique", ""),
+                            "action_taken": feedback_entry.get("action_taken", ""),
+                            "comments": feedback_entry.get("comments", ""),
+                            "analyst": feedback_entry.get("analyst", ""),
+                            "anomaly_score": feedback_entry.get("anomaly_score", 0),
+                            "risk_score": feedback_entry.get("risk_score", 0),
+                            "risk_level": feedback_entry.get("risk_level", "")
+                        }
+                        records.append(record)
+            except Exception as e:
+                logger.warning(f"Error loading dated feedback file {dated_file}: {e}")
         
         # Create DataFrame
         if records:
@@ -245,7 +289,7 @@ class FeedbackManager:
         Args:
             feedback_data (dict): Feedback data to save
         """
-        with open(self.feedback_file, 'w') as f:
+        with open(self.feedback_file, 'w', encoding='utf-8') as f:
             json.dump(feedback_data, f, indent=2)
     
     def get_feedback_stats(self):

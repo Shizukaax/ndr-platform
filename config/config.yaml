@@ -44,7 +44,7 @@ visualization:
   default_chart_height: 400
 
 reports:
-  output_dir: "reports"
+  output_dir: "data/reports"
   include_charts: true
   include_raw_data: false
   default_format: "html"
@@ -54,24 +54,36 @@ mitre:
   confidence_threshold: 0.6
 
 feedback:
-  storage_dir: "feedback"
+  storage_dir: "data/feedback"
   use_feedback_for_training: true
 
 system:
   cache_dir: "cache"
   models_dir: "models"
   data_dir: "data"
+  json_data_dir: "data/json"
+  reports_dir: "data/reports"
+  results_dir: "data/results"
   log_level: "INFO"
 
+# Anomaly History Storage (Persistent Data)
+anomaly_storage:
+  history_dir: "data/anomaly_history"
+  max_retention_days: 90  # Keep anomaly history for 90 days
+  backup_enabled: true
+  backup_interval_hours: 24
+  compression_enabled: false
+
 # Single Data Source Configuration
-# For development: "C:\\Users\\justinchua\\Desktop\\newnewapp\\data"
+# For development: "C:\\Users\\justinchua\\Desktop\\newnewapp\\data\\json"
 # For production: "/opt/arkime/json"
 data_source:
-  directory: "C:\\Users\\justinchua\\Desktop\\newnewapp\\data"
+  directory: "./data/json/"
   file_pattern: "*.json"
   max_files: 100
   recursive: true
-  polling_interval: 1  # seconds for real-time monitoring
+  # Note: polling_interval is legacy - we now use monitoring.real_time.auto_refresh_interval
+  polling_interval: 1  # seconds for real-time monitoring (deprecated)
   auto_refresh: true
 
 # Monitoring and Alert Settings
@@ -85,3 +97,33 @@ monitoring:
     metrics_update_interval: 5  # seconds
     max_buffer_size: 1000
     retention_hours: 24
+  real_time:
+    # Auto-refresh configuration (primary monitoring method)
+    auto_refresh_interval: 300  # seconds (5 minutes = 300 seconds)
+    enable_auto_refresh: true
+    file_change_notifications: true
+    # Anomaly detection configuration
+    anomaly_detection:
+      enabled: true
+      model_type: "ensemble"  # Options: "isolation_forest", "local_outlier_factor", "one_class_svm", "knn", "ensemble"
+      ensemble_config:
+        method: "weighted_average"  # Options: "average", "maximum", "weighted_average"
+        models:
+          isolation_forest:
+            enabled: true
+            weight: 0.4
+            contamination: 0.05
+          local_outlier_factor:
+            enabled: true
+            weight: 0.3
+            contamination: 0.05
+          one_class_svm:
+            enabled: true
+            weight: 0.3
+            contamination: 0.05
+          knn:
+            enabled: false
+            weight: 0.0
+            contamination: 0.05
+      single_model_fallback: "isolation_forest"  # Fallback if ensemble fails
+      confidence_threshold: 0.7  # Minimum confidence for alerts

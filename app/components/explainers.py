@@ -68,6 +68,11 @@ def explain_with_shap(model, X: pd.DataFrame, instance_idx: Optional[int] = None
         
         # Calculate SHAP values
         if instance_idx is not None:
+            # Validate instance_idx bounds
+            if instance_idx >= len(X):
+                print(f"Warning: Instance index {instance_idx} is out of bounds. Using index 0 instead.")
+                instance_idx = 0
+                
             # Explain a single instance
             X_instance = X.iloc[[instance_idx]]
             shap_values = explainer.shap_values(X_instance)
@@ -298,9 +303,22 @@ def create_interactive_shap_plot(shap_values: np.ndarray, X: pd.DataFrame,
         Interactive Plotly figure
     """
     if instance_idx is not None:
+        # Validate instance_idx bounds
+        max_idx = len(shap_values) - 1 if shap_values.ndim > 1 else 0
+        if instance_idx > max_idx:
+            st.error(f"Instance index {instance_idx} is out of bounds. Maximum index is {max_idx}.")
+            return go.Figure()
+        
         # Single instance waterfall plot
         values = shap_values[instance_idx] if shap_values.ndim > 1 else shap_values
-        feature_values = X.iloc[instance_idx] if X.ndim > 1 else X
+        
+        # Validate X bounds as well
+        max_x_idx = len(X) - 1 if hasattr(X, '__len__') else 0
+        if instance_idx > max_x_idx:
+            st.error(f"Feature data index {instance_idx} is out of bounds. Maximum index is {max_x_idx}.")
+            return go.Figure()
+            
+        feature_values = X.iloc[instance_idx] if hasattr(X, 'iloc') and X.ndim > 1 else X
         
         # Sort by absolute SHAP value
         sorted_indices = np.argsort(np.abs(values))[::-1]
@@ -562,6 +580,11 @@ def create_counterfactual_explanation(model, X: pd.DataFrame, instance_idx: int,
         Dictionary with counterfactual analysis
     """
     try:
+        # Validate instance_idx bounds
+        if instance_idx >= len(X):
+            print(f"Warning: Instance index {instance_idx} is out of bounds. Using index 0 instead.")
+            instance_idx = 0
+            
         original_instance = X.iloc[instance_idx].copy()
         
         # Handle NaN values - fill with median values

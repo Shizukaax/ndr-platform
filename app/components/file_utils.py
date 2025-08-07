@@ -12,6 +12,7 @@ from pathlib import Path
 from datetime import datetime
 import tempfile
 import shutil
+from core.config_loader import load_config
 
 from app.state.session_state import load_json_file, refresh_data_files
 
@@ -106,7 +107,7 @@ def load_and_process_json(file_path):
     """
     try:
         # Load the file
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         # Process the data
@@ -289,11 +290,14 @@ def create_example_json():
         }
     }
     
-    # Create example directory if it doesn't exist
-    os.makedirs("data/examples", exist_ok=True)
+    # Get data directory from config and create examples subdirectory
+    config = load_config()
+    data_dir = config.get('system', {}).get('data_dir', 'data')
+    examples_dir = f"{data_dir}/examples"
+    os.makedirs(examples_dir, exist_ok=True)
     
     # Save example file
-    file_path = "data/examples/example_network.json"
+    file_path = f"{examples_dir}/example_network.json"
     with open(file_path, 'w') as f:
         json.dump(example_data, f, indent=2)
     
@@ -311,7 +315,7 @@ def convert_csv_to_json(csv_file_path):
     """
     try:
         # Read CSV file
-        df = pd.read_csv(csv_file_path)
+        df = pd.read_csv(csv_file_path, encoding='utf-8')
         
         # Convert to JSON format
         json_data = []

@@ -1,30 +1,42 @@
-# 🛡️ NDR Platform - Network Detection & Response
+# 🛡️ NDR Platform v2.1.0 - Network Detection & Response
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/streamlit-1.28+-brightgreen.svg)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green.svg)](https://github.com/Shizukaax/ndr-platform/actions)
-[![Security](https://img.shields.io/badge/security-scanned-brightgreen.svg)](https://github.com/Shizukaax/ndr-platform/security)
+[![Production](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](https://github.com/Shizukaax/ndr-platform/releases)
+[![Enhanced](https://img.shields.io/badge/version-v2.1.0-orange.svg)](https://github.com/Shizukaax/ndr-platform/releases)
 
-**Advanced Network Security Analytics Platform with AI-Powered Threat Detection and MITRE ATT&CK Integration**
+**🚀 Production-Ready Network Security Analytics Platform with Enhanced ML-Powered Anomaly Detection**
 
-**👨‍💻 Author:** [Shizukaax](https://github.com/Shizukaax) | **🔗 Repository:** [ndr-platform](https://github.com/Shizukaax/ndr-platform)
+---
 
-## 🎯 Overview
+## 🎯 **Platform Overview** *(Production v2.1.0)*
 
-The NDR Platform is an enterprise-grade Network Detection and Response system that leverages machine learning and artificial intelligence to detect, analyze, and respond to network anomalies and security threats. Built with modern web technologies and designed for scalability, it provides comprehensive network security monitoring with automatic threat intelligence mapping.
+The NDR Platform is a **production-ready Network Detection and Response system** with **comprehensive anomaly detection capabilities**. Following recent critical fixes, it provides **enterprise-grade network security analytics** with **robust error handling** and **reliable data processing**.
 
-### ✨ Key Features
+### ✨ **Major Enhancements** *(August 2025)*
 
-- **🤖 AI-Powered Anomaly Detection** - Advanced machine learning algorithms for threat detection
+- **📊 Enterprise Anomaly Tracking** - Complete lifecycle management with persistent storage
+- **🎯 Baseline Learning System** - Automatic pattern detection and deviation alerts  
+- **🤖 Configurable ML Models** - Choose from 6 algorithms (Isolation Forest, LOF, One-Class SVM, KNN, HDBSCAN, Ensemble)
+- **⚖️ Ensemble Detection** - Weighted model combinations for improved accuracy
+- **📈 Anomaly History Dashboard** - Time-filtered historical analysis with trend insights
+- **🔧 Dynamic Configuration** - Runtime model switching via YAML configuration
+
+### ✨ Core Features
+
+- **🤖 Advanced ML-Powered Detection** - 6 configurable algorithms with ensemble support
+- **📊 Persistent Anomaly Tracking** - Enterprise-grade lifecycle management with JSON storage
+- **📈 Baseline Learning** - Automatic pattern learning and intelligent deviation detection
 - **🎯 MITRE ATT&CK Integration** - Automatic mapping to threat techniques and tactics  
-- **📊 Real-time Analytics** - Live monitoring and analysis of network traffic
-- **📋 Comprehensive Reporting** - Automated report generation and export capabilities
-- **🔍 Interactive Visualizations** - Rich data visualization and exploration tools
-- **🐳 Production Ready** - Docker containerization with scalable deployment options
+- **� Enhanced Real-time Analytics** - Live monitoring with configurable auto-refresh (30s-30min)
+- **🎯 Severity Classification** - Automated risk assessment (low/medium/high/critical)
+- **📋 Comprehensive Reporting** - Enhanced report generation with anomaly export capabilities
+- **🔍 Interactive Visualizations** - Rich data visualization with historical trend analysis
+- **🐳 Production Ready** - Docker containerization with enhanced scalable deployment
 
-## 🚀 Quick Start
+## 🚀 Enhanced Quick Start
 
 ### Prerequisites
 
@@ -32,14 +44,28 @@ The NDR Platform is an enterprise-grade Network Detection and Response system th
 - **Docker & Docker Compose** (for containerized deployment)
 - **8GB+ RAM** (recommended for large datasets)
 
-### 🐳 Docker Deployment (Recommended)
+### 🆕 **New PC Setup (Recommended)**
+
+```bash
+# Windows
+1. scripts\windows\setup.bat     # One-time setup (installs dependencies)
+2. deploy.bat                    # Deploy to Docker containers
+3. Open http://localhost:8501    # Access NDR Platform
+
+# Linux/macOS
+1. ./scripts/linux/setup.sh     # One-time setup (installs dependencies)
+2. ./deploy.sh                   # Deploy to Docker containers  
+3. Open http://localhost:8501    # Access NDR Platform
+```
+
+### 🐳 **Manual Docker Deployment**
 
 ```bash
 # Clone the repository
 git clone https://github.com/Shizukaax/ndr-platform.git
 cd ndr-platform
 
-# Configure environment
+# Configure environment (optional)
 cp .env.example .env
 # Edit .env with your configuration
 
@@ -51,22 +77,12 @@ docker-compose up -d
 open http://localhost:8501
 ```
 
-### 🐍 Local Development Setup
+### 🐍 **Development Mode (No Docker)**
 
 ```bash
-# Clone and setup
-git clone https://github.com/Shizukaax/ndr-platform.git
-cd ndr-platform
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Setup platform
-python scripts/setup.py
+# After running setup script:
+# Windows: venv\Scripts\activate
+# Linux/macOS: source venv/bin/activate
 
 # Run the application
 streamlit run run.py
@@ -179,13 +195,13 @@ curl -X POST "http://localhost:8501/api/reports" \
 
 ## 📚 Documentation
 
-Comprehensive documentation is available in the `docs/` directory:
+Comprehensive documentation is available in the `guides/` directory:
 
-- **[📖 User Guide](docs/USER_GUIDE.md)** - Complete user manual
-- **[🔧 Configuration Guide](docs/CONFIGURATION_GUIDE.md)** - Setup and configuration
-- **[🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment
-- **[🔗 API Documentation](docs/API_DOCUMENTATION.md)** - API reference
-- **[🏗️ Project Structure](docs/PROJECT_ORGANIZATION.md)** - Architecture details
+- **[📖 User Guide](guides/USER_GUIDE.md)** - Complete user manual
+- **[🔧 Configuration Guide](guides/CONFIGURATION_GUIDE.md)** - Setup and configuration
+- **[🚀 Deployment Guide](guides/DEPLOYMENT_GUIDE.md)** - Production deployment
+- **[🔗 API Documentation](guides/API_DOCUMENTATION.md)** - API reference
+- **[🏗️ Project Structure](guides/PROJECT_ORGANIZATION.md)** - Architecture details
 
 ## 🤝 Community & Contributing
 
@@ -275,7 +291,7 @@ ndr-platform/
 │   ├── CONTRIBUTING.md         # Contribution guidelines
 │   ├── SECURITY.md             # Security policy
 │   └── templates/              # Issue & PR templates
-├── deployment/                 # Deployment configuration
+├── guides/deployment/          # Deployment configuration
 │   ├── docker-compose.yml      # Container orchestration
 │   ├── Dockerfile              # Application container
 │   ├── nginx.conf              # Reverse proxy setup
@@ -298,7 +314,7 @@ ndr-platform/
 │   ├── models/                 # ML model implementations
 │   ├── explainers/             # Model interpretability
 │   └── *.py                    # Core services
-├── docs/                       # Comprehensive documentation
+├── guides/                      # Comprehensive documentation
 ├── examples/                   # Usage examples & tutorials
 ├── tools/                      # Utility modules
 ├── data/                       # Data storage
@@ -343,7 +359,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **💰 [Funding](FUNDING.yml)** - Support the project development
 
 ### 📞 **Get Help**
-- **📖 Documentation**: Check the [docs/](docs/) directory
+- **📖 Documentation**: Check the [guides/](guides/) directory
 - **🐛 Bug Reports**: Use [GitHub Issues](https://github.com/Shizukaax/ndr-platform/issues)
 - **� Feature Requests**: Submit [enhancement requests](https://github.com/Shizukaax/ndr-platform/issues/new?template=feature_request.yml)
 - **💬 Questions**: Ask in [GitHub Discussions](https://github.com/Shizukaax/ndr-platform/discussions)

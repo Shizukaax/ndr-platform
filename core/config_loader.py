@@ -101,7 +101,7 @@ def load_config(config_path=None):
     # Try to load config file
     try:
         if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
+            with open(config_path, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
             
             # Merge with defaults to ensure all required fields exist
@@ -121,7 +121,7 @@ def load_config(config_path=None):
         else:
             # Create default config file if it doesn't exist
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            with open(config_path, 'w') as f:
+            with open(config_path, 'w', encoding='utf-8') as f:
                 yaml.safe_dump(DEFAULT_CONFIG, f, default_flow_style=False, sort_keys=False)
             return DEFAULT_CONFIG
     except Exception as e:
@@ -149,7 +149,7 @@ def save_config(config, config_path=None):
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
         
         # Save config
-        with open(config_path, 'w') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
         
         return True

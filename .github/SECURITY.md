@@ -1,16 +1,17 @@
-# Security Policy
+# Security Policy - NDR Platform v2.1.0
 
 **👨‍💻 Author:** [Shizukaax](https://github.com/Shizukaax) | **📧 Contact:** justinchua@tunglok.com
 
 ## Supported Versions
 
-We provide security updates for the following versions:
+We provide security updates for the current production-ready version:
 
-| Version | Supported          | End of Life |
-| ------- | ------------------ | ----------- |
-| 2.x.x   | :white_check_mark: | Active |
-| 1.x.x   | :white_check_mark: | Dec 2025 |
-| < 1.0   | :x:                | Unsupported |
+| Version | Supported          | Status | End of Life |
+| ------- | ------------------ | ------ | ----------- |
+| 2.1.x   | :white_check_mark: | Production Ready | Active |
+| 2.0.x   | :white_check_mark: | Maintenance Only | Dec 2025 |
+| 1.x.x   | :x:                | End of Life | Deprecated |
+| < 1.0   | :x:                | Unsupported | Deprecated |
 
 ## Reporting a Vulnerability
 
@@ -49,9 +50,9 @@ When deploying NDR Platform:
 4. **Updates**: Keep dependencies updated regularly
 5. **Monitoring**: Enable security logging and monitoring
 
-### 🔍 **Security Scanning**
+### 🔍 **Security Scanning & Validation (v2.1.0)**
 
-We provide built-in security scanning:
+We provide built-in security scanning with critical fixes validation:
 
 ```bash
 # Run comprehensive security scan
@@ -60,8 +61,17 @@ python scripts/security_scanner.py all
 # Check for vulnerabilities
 python scripts/security_scanner.py dependencies
 
-# Audit code security
+# Audit code security  
 python scripts/security_scanner.py code
+
+# Validate critical fixes are applied
+python test_encoding_fixes.py
+python test_results_saving.py
+python test_feedback_dirs.py
+python test_final_verification.py
+
+# Verify platform integrity
+python scripts/verify_structure.py
 ```
 
 ### 🏆 **Responsible Disclosure**
@@ -87,17 +97,20 @@ Before deployment, ensure:
 - [ ] File permissions are properly set
 - [ ] Logs don't contain sensitive information
 
-### 🔐 **Security Features**
+### 🔐 **Security Features (v2.1.0 Production)**
 
-The NDR Platform includes:
+The NDR Platform includes enhanced security features with critical fixes:
 
 - **Data Encryption**: TLS 1.3 for data in transit
-- **Access Control**: Role-based permissions
-- **Audit Logging**: Complete activity tracking  
+- **Access Control**: Role-based permissions with validated directory structure
+- **Audit Logging**: Complete activity tracking with UTF-8 encoding fixes
 - **Network Isolation**: Containerized deployment
 - **Secure Defaults**: Hardened configuration templates
-- **Input Validation**: Comprehensive data sanitization
+- **Input Validation**: Comprehensive data sanitization with NaN value protection
 - **Session Management**: Secure session handling
+- **Results Security**: Protected results saving with Arrow compatibility fixes
+- **Data Integrity**: Unicode/encoding validation across all components
+- **Directory Security**: Validated feedback and results directory permissions
 
 ## Contact
 

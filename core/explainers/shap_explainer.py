@@ -126,12 +126,37 @@ class ShapExplainer(BaseExplainer):
                     self.explainer = shap.KernelExplainer(sklearn_model.predict, 
                                                          shap.sample(self.background_data, 100))
             except Exception as e:
-                # As a last resort, use a simple wrapper function
+                # As a last resort, use a simple wrapper function with additional error handling
                 print(f"KernelExplainer failed: {str(e)}")
-                def predict_fn(x):
-                    return self.model.predict(x)
-                self.explainer = shap.KernelExplainer(predict_fn, 
-                                                     shap.sample(self.background_data, 100))
+                
+                def safe_predict_fn(x):
+                    """Safe prediction function that handles various edge cases"""
+                    try:
+                        # Ensure input is properly formatted
+                        if hasattr(x, 'values'):
+                            x = x.values
+                        if hasattr(x, 'reshape') and len(x.shape) == 1:
+                            x = x.reshape(1, -1)
+                        
+                        # Fill any remaining NaN values
+                        if pd.isna(x).any():
+                            x = np.nan_to_num(x, nan=0.0)
+                        
+                        return self.model.predict(x)
+                    except Exception as pred_e:
+                        # If prediction still fails, return a default score
+                        print(f"Prediction function failed: {str(pred_e)}")
+                        return np.array([0.0] * x.shape[0])
+                
+                # Use a smaller sample to reduce chances of issues
+                background_sample = shap.sample(self.background_data, min(50, len(self.background_data)))
+                
+                try:
+                    self.explainer = shap.KernelExplainer(safe_predict_fn, background_sample)
+                except Exception as final_e:
+                    print(f"Final KernelExplainer attempt failed: {str(final_e)}")
+                    # Set explainer to None to indicate failure
+                    self.explainer = None
         
         elif self.explainer_type == 'kernel':
             # Create a prediction function
@@ -164,25 +189,104 @@ class ShapExplainer(BaseExplainer):
         """
         # Initialize explainer if not done yet
         if self.explainer is None:
-            self.background_data = X
+            # Clean and prepare background data for SHAP
+            self.background_data = X.copy()
+            
+            # Handle NaN values in background data
+            if self.background_data.isnull().any().any():
+                # Fill NaN values with median for numeric columns
+                for col in self.background_data.select_dtypes(include=[np.number]).columns:
+                    if self.background_data[col].isnull().any():
+                        median_val = self.background_data[col].median()
+                        if pd.isna(median_val):  # If median is also NaN, use 0
+                            self.background_data[col] = self.background_data[col].fillna(0)
+                        else:
+                            self.background_data[col] = self.background_data[col].fillna(median_val)
+                
+                # For non-numeric columns, fill with mode or default value
+                for col in self.background_data.select_dtypes(exclude=[np.number]).columns:
+                    if self.background_data[col].isnull().any():
+                        mode_val = self.background_data[col].mode()
+                        if len(mode_val) > 0:
+                            self.background_data[col] = self.background_data[col].fillna(mode_val[0])
+                        else:
+                            self.background_data[col] = self.background_data[col].fillna('unknown')
+            
             self._initialize_explainer()
         
+        # Check if explainer initialization was successful
+        if self.explainer is None:
+            # Return a fallback explanation if SHAP initialization failed
+            print("SHAP explainer could not be initialized. Returning basic feature importance.")
+            
+            feature_names = self.feature_names or [f"feature_{i}" for i in range(X.shape[1])]
+            
+            return {
+                "shap_values": None,
+                "feature_names": feature_names,
+                "error": "SHAP explainer initialization failed",
+                "explanation_type": "fallback",
+                "message": "Could not generate SHAP explanations due to data compatibility issues"
+            }
+        
+        # Clean input data X to handle NaN values
+        X_clean = X.copy()
+        if X_clean.isnull().any().any():
+            # Fill NaN values using the same method as background data
+            for col in X_clean.select_dtypes(include=[np.number]).columns:
+                if X_clean[col].isnull().any():
+                    # Use background data median if available, otherwise use column median
+                    if col in self.background_data.columns:
+                        fill_val = self.background_data[col].median()
+                    else:
+                        fill_val = X_clean[col].median()
+                    
+                    if pd.isna(fill_val):
+                        fill_val = 0
+                    X_clean[col] = X_clean[col].fillna(fill_val)
+            
+            # Handle non-numeric columns
+            for col in X_clean.select_dtypes(exclude=[np.number]).columns:
+                if X_clean[col].isnull().any():
+                    if col in self.background_data.columns:
+                        mode_val = self.background_data[col].mode()
+                        fill_val = mode_val[0] if len(mode_val) > 0 else 'unknown'
+                    else:
+                        mode_val = X_clean[col].mode()
+                        fill_val = mode_val[0] if len(mode_val) > 0 else 'unknown'
+                    X_clean[col] = X_clean[col].fillna(fill_val)
+        
         # If no specific instance is provided, explain all instances
-        if instance_index is None:
-            shap_values = self.explainer.shap_values(X)
+        try:
+            if instance_index is None:
+                shap_values = self.explainer.shap_values(X_clean)
+                
+                # Handle different return types based on explainer
+                if isinstance(shap_values, list):
+                    # For multi-output models, use the first output
+                    shap_values = shap_values[0]
+            else:
+                # Select the specific instance from cleaned data
+                instance = X_clean.iloc[instance_index].values.reshape(1, -1) if hasattr(X_clean, 'iloc') else X_clean[instance_index].reshape(1, -1)
+                shap_values = self.explainer.shap_values(instance)
+                
+                # Handle different return types
+                if isinstance(shap_values, list):
+                    shap_values = shap_values[0]
+        
+        except Exception as shap_e:
+            print(f"SHAP value calculation failed: {str(shap_e)}")
             
-            # Handle different return types based on explainer
-            if isinstance(shap_values, list):
-                # For multi-output models, use the first output
-                shap_values = shap_values[0]
-        else:
-            # Select the specific instance
-            instance = X.iloc[instance_index].values.reshape(1, -1) if hasattr(X, 'iloc') else X[instance_index].reshape(1, -1)
-            shap_values = self.explainer.shap_values(instance)
+            # Return a fallback explanation
+            feature_names = self.feature_names or [f"feature_{i}" for i in range(X_clean.shape[1])]
             
-            # Handle different return types
-            if isinstance(shap_values, list):
-                shap_values = shap_values[0]
+            return {
+                "shap_values": None,
+                "feature_names": feature_names,
+                "error": f"SHAP calculation failed: {str(shap_e)}",
+                "explanation_type": "fallback",
+                "message": "Could not calculate SHAP values due to model compatibility issues"
+            }
         
         # Create feature names if not provided
         if self.feature_names is None:

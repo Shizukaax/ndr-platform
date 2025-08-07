@@ -158,9 +158,15 @@ def extract_parameter_data(models: List[Dict[str, Any]]) -> pd.DataFrame:
     param_data = []
     
     for model in models:
-        model_type = model.get("type", "Unknown")
-        metadata = model.get("metadata", {})
-        parameters = metadata.get("parameters", {})
+        # Handle both string and dict models
+        if isinstance(model, str):
+            model_type = model
+            metadata = {}
+            parameters = {}
+        else:
+            model_type = model.get("type", "Unknown")
+            metadata = model.get("metadata", {})
+            parameters = metadata.get("parameters", {})
         
         # Extract common parameters
         if isinstance(parameters, dict):

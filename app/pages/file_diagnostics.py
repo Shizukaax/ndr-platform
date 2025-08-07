@@ -13,8 +13,8 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-from utils.file_diagnostics import diagnose_directories, diagnose_pickle_save, force_save_model
-from utils.data_saver import DataSaver
+from core.file_diagnostics import diagnose_directories, diagnose_pickle_save, force_save_model
+from core.data_saver import DataSaver
 
 # Get logger
 logger = logging.getLogger("streamlit_app")

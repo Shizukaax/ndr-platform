@@ -137,9 +137,10 @@ def show_reporting():
                             score_plot = plot_anomaly_scores(
                                 df, 
                                 model_results['scores'], 
-                                threshold,
-                                title="Anomaly Score Distribution"
+                                threshold
                             )
+                            # Update title manually
+                            score_plot.update_layout(title="Anomaly Score Distribution")
                             plots.append(score_plot)
                             
                             if len(model_results.get('features', [])) > 0:

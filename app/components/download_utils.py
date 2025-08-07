@@ -14,6 +14,7 @@ from datetime import datetime
 import tempfile
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+from core.config_loader import load_config
 
 def get_csv_download_link(df, filename="data.csv", link_text="Download CSV"):
     """
@@ -136,12 +137,14 @@ def export_to_csv(df, filepath=None):
         str: Path to the saved file
     """
     if filepath is None:
-        # Create reports directory if it doesn't exist
-        os.makedirs("reports", exist_ok=True)
+        # Get reports directory from config
+        config = load_config()
+        reports_dir = config.get('system', {}).get('reports_dir', 'data/reports')
+        os.makedirs(reports_dir, exist_ok=True)
         
         # Generate filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = f"reports/export_{timestamp}.csv"
+        filepath = f"{reports_dir}/export_{timestamp}.csv"
     
     # Export to CSV
     df.to_csv(filepath, index=False)
@@ -160,12 +163,14 @@ def export_to_excel(df, filepath=None):
         str: Path to the saved file
     """
     if filepath is None:
-        # Create reports directory if it doesn't exist
-        os.makedirs("reports", exist_ok=True)
+        # Get reports directory from config
+        config = load_config()
+        reports_dir = config.get('system', {}).get('reports_dir', 'data/reports')
+        os.makedirs(reports_dir, exist_ok=True)
         
         # Generate filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = f"reports/export_{timestamp}.xlsx"
+        filepath = f"{reports_dir}/export_{timestamp}.xlsx"
     
     # Export to Excel
     df.to_excel(filepath, index=False)
@@ -218,7 +223,7 @@ def create_html_report(df, title, description, plots=None):
                 plot.write_html(plot_path)
             
             # Read the plot HTML
-            with open(plot_path, "r") as f:
+            with open(plot_path, "r", encoding='utf-8') as f:
                 plot_html = f.read()
             
             # Extract the plot content (remove html, head, body tags)
@@ -257,15 +262,17 @@ def save_html_report(html_content, filepath=None):
         str: Path to the saved file
     """
     if filepath is None:
-        # Create reports directory if it doesn't exist
-        os.makedirs("reports", exist_ok=True)
+        # Get reports directory from config
+        config = load_config()
+        reports_dir = config.get('system', {}).get('reports_dir', 'data/reports')
+        os.makedirs(reports_dir, exist_ok=True)
         
         # Generate filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = f"reports/report_{timestamp}.html"
+        filepath = f"{reports_dir}/report_{timestamp}.html"
     
     # Save HTML content
-    with open(filepath, "w") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(html_content)
     
     return filepath

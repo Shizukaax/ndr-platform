@@ -1,81 +1,104 @@
-# 🛠️ NDR Platform - Management Scripts
+# 🛠️ NDR Platform - Management Scripts (Cleaned Up)
 
 **Author:** [Shizukaax](https://github.com/Shizukaax) | **Repository:** [ndr-platform](https://github.com/Shizukaax/ndr-platform)
 
 ## 📋 Overview
 
-This directory contains comprehensive management and utility scripts for the NDR Platform. These scripts automate common tasks including setup, deployment, monitoring, and maintenance operations.
+This directory contains **specialized management scripts** for the NDR Platform. 
 
-## 🚀 Quick Start
+⚠️ **NOTE:** For basic operations, use the **root-level scripts**:
+- `./deploy.sh` or `deploy.bat` - Smart deployment
+- `./scripts/linux/setup.sh` or `scripts\windows\setup.bat` - One-time setup
+- `./health-check.sh` - Health verification
 
-```bash
-# Make scripts executable (Linux/Mac)
-chmod +x scripts/*.py
+## �️ **Current Script Organization**
 
-# Run any script with help
-python scripts/<script_name>.py --help
-
-# Example: Check system health
-python scripts/health_check.py
+### 📁 **Platform-Specific Setup/Cleanup**
+```
+├── linux/
+│   ├── setup.sh           # One-time platform setup (Linux/macOS)
+│   └── cleanup.sh         # System cleanup (Linux/macOS)
+└── windows/
+    ├── setup.bat          # One-time platform setup (Windows)
+    └── cleanup.bat        # System cleanup (Windows)
 ```
 
-## 📜 Available Scripts
-
-### 🔧 **Setup & Configuration**
-
-#### `setup.py` - Platform Initialization
-**Purpose:** Complete platform setup and environment configuration
-```bash
-python scripts/setup.py [--environment dev|prod] [--force]
+### 🐍 **Specialized Python Scripts** (Complex logic & integrations)
 ```
-- ✅ Environment setup and validation
-- ✅ Dependency installation and verification
-- ✅ Configuration file generation
-- ✅ Database initialization
-- ✅ Directory structure creation
-
----
-
-### 🚀 **Deployment & Operations**
-
-#### `deploy.py` - Deployment Automation
-**Purpose:** Automated deployment to various environments
-```bash
-python scripts/deploy.py [--env staging|production] [--rollback]
+├── backup.py              # Data backup/restore with compression
+├── data_manager.py        # Advanced data processing & validation
+├── dev_utils.py           # Development utilities & debugging
+├── health_check.py        # Detailed health analysis (uses psutil)
+├── log_analyzer.py        # Log parsing & analysis
+├── model_manager.py       # ML model training & management
+└── security_scanner.py    # Security scanning & threat analysis
 ```
-- ✅ Multi-environment deployment (dev/staging/prod)
-- ✅ Docker container orchestration
-- ✅ Health checks and validation
-- ✅ Rollback capabilities
-- ✅ Blue-green deployment support
 
-#### `health_check.py` - System Health Monitoring
-**Purpose:** Comprehensive system health validation
+## 🎯 **Why Keep Python Scripts?**
+
+These scripts use **complex Python libraries** and **application integration** that would be difficult to replicate in shell scripts:
+
+- **`backup.py`** - Uses tarfile, zipfile, complex directory traversal
+- **`health_check.py`** - Uses psutil for system metrics, requests for API testing
+- **`model_manager.py`** - Integrates with scikit-learn, pandas, pickle
+- **`security_scanner.py`** - Uses requests, JSON parsing, threat intelligence APIs
+- **`log_analyzer.py`** - Complex regex patterns, pandas analysis
+- **`data_manager.py`** - DataFrame operations, data validation
+- **`dev_utils.py`** - IDE integration, debugging utilities
+
+## 🚀 **Quick Start for New PC Setup**
+
+### **Option 1: Docker Deployment (Recommended)**
+```bash
+# Windows
+1. scripts\windows\setup.bat     # One-time setup
+2. deploy.bat                    # Docker deployment
+3. Open http://localhost:8501    # Access platform
+
+# Linux/macOS
+1. ./scripts/linux/setup.sh     # One-time setup
+2. ./deploy.sh                   # Docker deployment
+3. Open http://localhost:8501    # Access platform
+```
+
+### **Option 2: Development Mode**
+```bash
+# Windows
+1. scripts\windows\setup.bat     # One-time setup
+2. venv\Scripts\activate         # Activate environment
+3. streamlit run run.py          # Start development server
+
+# Linux/macOS
+1. ./scripts/linux/setup.sh     # One-time setup
+2. source venv/bin/activate      # Activate environment
+3. streamlit run run.py          # Start development server
+```
+
+## 📜 **Specialized Python Scripts**
+
+### 🔧 **System Management**
+
+#### `health_check.py` - Detailed Health Analysis
+**Purpose:** Comprehensive system health validation with detailed metrics
 ```bash
 python scripts/health_check.py [--detailed] [--export-report]
 ```
 - ✅ Service availability checks
 - ✅ Database connectivity validation
-- ✅ Disk space and memory monitoring
+- ✅ System resource monitoring (CPU, Memory, Disk)
 - ✅ Model performance validation
 - ✅ API endpoint testing
 
----
-
-### 🔒 **Security & Auditing**
-
-#### `security_scanner.py` - Security Auditing
-**Purpose:** Comprehensive security scanning and vulnerability assessment
+#### `backup.py` - Backup & Restore Operations
+**Purpose:** Complete backup and disaster recovery
 ```bash
-python scripts/security_scanner.py [--scan-type all|deps|files] [--report-format json|html]
+python scripts/backup.py [--action backup|restore] [--type full|incremental]
 ```
-- ✅ Dependency vulnerability scanning
-- ✅ File permission auditing
-- ✅ Configuration security validation
-- ✅ Compliance reporting
-- ✅ Security recommendations
-
----
+- ✅ Full and incremental backups
+- ✅ Model and configuration backup
+- ✅ Data archive and restore
+- ✅ Point-in-time recovery
+- ✅ Backup validation and testing
 
 ### 🤖 **Machine Learning & Data**
 
@@ -101,24 +124,18 @@ python scripts/data_manager.py [--action validate|clean|transform] [--source pat
 - ✅ Data transformation pipelines
 - ✅ Export and backup operations
 
----
+### � **Security & Monitoring**
 
-### 💾 **Backup & Recovery**
-
-#### `backup.py` - Backup & Restore Operations
-**Purpose:** Complete backup and disaster recovery
+#### `security_scanner.py` - Security Auditing
+**Purpose:** Comprehensive security scanning and vulnerability assessment
 ```bash
-python scripts/backup.py [--action backup|restore] [--type full|incremental]
+python scripts/security_scanner.py [--scan-type all|deps|files] [--report-format json|html]
 ```
-- ✅ Full and incremental backups
-- ✅ Model and configuration backup
-- ✅ Database backup and restore
-- ✅ Point-in-time recovery
-- ✅ Backup validation and testing
-
----
-
-### 📊 **Monitoring & Analysis**
+- ✅ Dependency vulnerability scanning
+- ✅ File permission auditing
+- ✅ Configuration security validation
+- ✅ Compliance reporting
+- ✅ Security recommendations
 
 #### `log_analyzer.py` - Log Analysis & Monitoring
 **Purpose:** Comprehensive log analysis and monitoring
@@ -130,6 +147,8 @@ python scripts/log_analyzer.py [--timeframe 24h|7d|30d] [--severity error|warnin
 - ✅ Performance metrics extraction
 - ✅ Alert generation
 - ✅ Report generation
+
+### 🛠️ **Development Tools**
 
 #### `dev_utils.py` - Development Utilities
 **Purpose:** Development and debugging tools
@@ -146,55 +165,58 @@ python scripts/dev_utils.py [--action profile|debug|test] [--component all|model
 
 ## 🔄 Common Workflows
 
-### **Fresh Installation**
+### **🆕 Fresh Installation on New PC**
 ```bash
-# 1. Initialize platform
-python scripts/setup.py --environment dev
+# Windows Users
+1. scripts\windows\setup.bat     # Install dependencies & setup environment
+2. deploy.bat                    # Deploy to Docker containers
+3. Open http://localhost:8501    # Access NDR Platform
 
-# 2. Validate installation
-python scripts/health_check.py --detailed
+# Linux/macOS Users  
+1. ./scripts/linux/setup.sh     # Install dependencies & setup environment
+2. ./deploy.sh                   # Deploy to Docker containers
+3. Open http://localhost:8501    # Access NDR Platform
+```
 
-# 3. Run security scan
+### **🔄 Daily Operations**
+```bash
+# Start/Restart Platform
+deploy.bat                       # Windows
+./deploy.sh                      # Linux/macOS
+
+# Health Check
+./health-check.sh               # Check platform status
+
+# View Logs
+docker-compose logs -f          # Follow logs
+```
+
+### **🛠️ Development Mode (Alternative to Docker)**
+```bash
+# Windows
+1. scripts\windows\setup.bat     # One-time setup
+2. venv\Scripts\activate         # Activate Python environment
+3. streamlit run run.py          # Start development server
+
+# Linux/macOS
+1. ./scripts/linux/setup.sh     # One-time setup
+2. source venv/bin/activate      # Activate Python environment
+3. streamlit run run.py          # Start development server
+```
+
+### **🔍 Advanced Operations**
+```bash
+# Security Audit
 python scripts/security_scanner.py --scan-type all
-```
 
-### **Production Deployment**
-```bash
-# 1. Deploy to production
-python scripts/deploy.py --env production
-
-# 2. Validate deployment
-python scripts/health_check.py
-
-# 3. Create backup
-python scripts/backup.py --action backup --type full
-```
-
-### **Maintenance Routine**
-```bash
-# 1. Analyze logs
-python scripts/log_analyzer.py --timeframe 24h
-
-# 2. Health check
-python scripts/health_check.py
-
-# 3. Security scan
-python scripts/security_scanner.py
-
-# 4. Backup
-python scripts/backup.py --action backup --type incremental
-```
-
-### **Model Updates**
-```bash
-# 1. Train new model
+# Model Training
 python scripts/model_manager.py --action train --model-type isolation
 
-# 2. Evaluate performance
-python scripts/model_manager.py --action evaluate
+# Data Backup
+python scripts/backup.py --action backup --type full
 
-# 3. Deploy if satisfactory
-python scripts/model_manager.py --action deploy
+# Log Analysis
+python scripts/log_analyzer.py --timeframe 24h --severity error
 ```
 
 ## 📊 Script Dependencies

@@ -1,14 +1,16 @@
-# 🆘 Getting Support
+# 🆘 Getting Support - NDR Platform v2.1.0
 
 **Author:** [Shizukaax](https://github.com/Shizukaax) | **Contact:** justinchua@tunglok.com
 
 ## 📞 How to Get Help
 
-### 🐛 **Bug Reports**
-If you've found a bug, please:
+### 🐛 **Bug Reports (v2.1.0 Production)**
+If you've found a bug in the production-ready platform, please:
 1. **Check existing issues** first: [GitHub Issues](https://github.com/Shizukaax/ndr-platform/issues)
 2. **Create a new issue** using our [bug report template](https://github.com/Shizukaax/ndr-platform/issues/new)
 3. **Include details**: Error messages, screenshots, steps to reproduce
+4. **Run diagnostics**: `python scripts/health_check.py` and include output
+5. **Check for known fixes**: Review recent critical fixes applied in v2.1.0
 
 ### 💡 **Feature Requests**
 For new features or enhancements:
@@ -19,7 +21,7 @@ For new features or enhancements:
 ### ❓ **Questions & Discussions**
 For general questions, usage help, or discussions:
 1. **GitHub Discussions**: [Start a discussion](https://github.com/Shizukaax/ndr-platform/discussions)
-2. **Documentation**: Check our [comprehensive docs](../docs/)
+2. **Documentation**: Check our [comprehensive guides](../guides/)
 3. **Examples**: Review [usage examples](../examples/)
 
 ### 🚨 **Security Issues**
@@ -31,26 +33,36 @@ For security vulnerabilities:
 ## 📚 **Self-Help Resources**
 
 ### **Documentation**
-- **[User Guide](../docs/USER_GUIDE.md)** - Complete user manual
-- **[Configuration Guide](../docs/CONFIGURATION_GUIDE.md)** - Setup instructions
-- **[Deployment Guide](../docs/DEPLOYMENT_GUIDE.md)** - Production deployment
-- **[API Documentation](../docs/API_DOCUMENTATION.md)** - API reference
-- **[Troubleshooting](../docs/USER_GUIDE.md#troubleshooting)** - Common issues
+- **[User Guide](../guides/USER_GUIDE.md)** - Complete user manual
+- **[Configuration Guide](../guides/CONFIGURATION_GUIDE.md)** - Setup instructions
+- **[Deployment Guide](../guides/DEPLOYMENT_GUIDE.md)** - Production deployment
+- **[API Documentation](../guides/API_DOCUMENTATION.md)** - API reference
+- **[Troubleshooting](../guides/USER_GUIDE.md#troubleshooting)** - Common issues
 
-### **Quick Fixes**
-| Problem | Solution |
-|---------|----------|
-| Installation issues | Check [Configuration Guide](../docs/CONFIGURATION_GUIDE.md) |
-| Docker problems | Verify Docker is running and check [Deployment Guide](../docs/DEPLOYMENT_GUIDE.md) |
-| Data loading errors | Review supported formats in [User Guide](../docs/USER_GUIDE.md) |
-| Model training issues | Check [Model Management](../docs/USER_GUIDE.md#model-training) |
-| Permission errors | Ensure proper file permissions and paths |
+### **Quick Fixes & Diagnostics (v2.1.0)**
+| Problem | Solution | Diagnostic Tool |
+|---------|----------|----------------|
+| Installation issues | Check [Configuration Guide](../guides/CONFIGURATION_GUIDE.md) | `python scripts/health_check.py` |
+| Docker problems | Verify Docker and check [Deployment Guide](../guides/DEPLOYMENT_GUIDE.md) | `python scripts/verify_structure.py` |
+| Data loading errors | Review formats in [User Guide](../guides/USER_GUIDE.md) | `python test_encoding_fixes.py` |
+| Model training issues | Check [Model Management](../guides/USER_GUIDE.md#model-training) | `python test_results_saving.py` |
+| Permission errors | Ensure proper file permissions and paths | `python test_feedback_dirs.py` |
+| NaN value errors | Check numeric data validation | `python test_final_verification.py` |
+| Unicode/encoding issues | Verify text processing | `python test_encoding_fixes.py` |
+| Arrow serialization problems | Check data format compatibility | `python test_results_saving.py` |
 
-### **Logs & Debugging**
-1. **Check application logs**: `logs/` directory
-2. **Enable debug mode**: Set `LOG_LEVEL=DEBUG` in `.env`
+### **Logs & Debugging (Enhanced)**
+1. **Check application logs**: `logs/` directory (now with UTF-8 encoding fixes)
+2. **Enable debug mode**: Set `LOG_LEVEL=DEBUG` in `.env`  
 3. **Health check**: Run `python scripts/health_check.py`
-4. **System validation**: Use built-in diagnostic tools
+4. **System validation**: Use `python scripts/verify_structure.py`
+5. **Critical fixes validation**: Run comprehensive test suite:
+   ```bash
+   python test_encoding_fixes.py
+   python test_results_saving.py  
+   python test_feedback_dirs.py
+   python test_final_verification.py
+   ```
 
 ## ⏱️ **Response Times**
 
@@ -79,13 +91,15 @@ For urgent issues, complex problems, or business inquiries:
 
 Please include:
 - Your operating system and version
-- Python version
-- NDR Platform version
+- Python version  
+- **NDR Platform v2.1.0** (production version)
 - Error messages (if any)
 - Steps you've already tried
+- Output from diagnostic tools (`python scripts/health_check.py`)
+- Results from critical fix validation tests
 
 ---
 
-**Thank you for using the NDR Platform!** 🛡️
+**Thank you for using the NDR Platform v2.1.0!** 🛡️
 
-We're committed to providing excellent support and making network security accessible to everyone.
+We're committed to providing excellent support for our production-ready platform and making network security accessible to everyone.

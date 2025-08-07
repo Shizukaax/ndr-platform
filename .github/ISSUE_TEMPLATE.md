@@ -1,6 +1,6 @@
 ---
-name: Bug Report
-about: Create a report to help us improve
+name: Bug Report - NDR Platform v2.1.0
+about: Create a report to help us improve the production-ready platform
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -27,13 +27,30 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. Windows 11, Ubuntu 22.04]
  - Python Version: [e.g. 3.11.0]
  - Browser [e.g. Chrome, Firefox]
- - NDR Platform Version [e.g. 1.0.0]
+ - **NDR Platform Version: v2.1.0 (Production)**
 
-**Additional context**
-Add any other context about the problem here.
+**Diagnostic Information**
+Please run the following and include output:
+```bash
+# Health check
+python scripts/health_check.py
+
+# Structure validation
+python scripts/verify_structure.py
+
+# Critical fixes validation (if applicable)
+python test_encoding_fixes.py
+python test_results_saving.py
+python test_feedback_dirs.py
+```
 
 **Logs**
-If applicable, add relevant log entries:
+Please check `logs/` directory and include relevant entries:
 ```
 paste log entries here
 ```
+
+**Additional context**
+- Have you verified critical fixes are applied? (Run diagnostic commands above)
+- Does this issue involve NaN values, encoding, or Arrow serialization?
+- Add any other context about the problem here.

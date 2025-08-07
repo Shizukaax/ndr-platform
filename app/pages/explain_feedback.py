@@ -23,6 +23,22 @@ from core.config_loader import load_config, load_mitre_data
 from app.components.error_handler import handle_error
 from app.components.visualization import find_timestamp_column
 
+def clean_dataframe_for_arrow(df):
+    """
+    Clean dataframe for Arrow serialization by converting problematic data types.
+    """
+    df_clean = df.copy()
+    for col in df_clean.columns:
+        if df_clean[col].dtype == 'object':
+            df_clean[col] = df_clean[col].apply(lambda x: 
+                'N/A' if pd.isna(x) 
+                else str(x) if isinstance(x, (pd.Timestamp, datetime, list, dict, np.ndarray))
+                else x
+            )
+        elif pd.api.types.is_datetime64_any_dtype(df_clean[col]):
+            df_clean[col] = df_clean[col].astype(str)
+    return df_clean
+
 # Enhanced imports for new features
 try:
     from app.components.explainers import (
@@ -185,15 +201,27 @@ def show_explain_feedback():
         anomalies_display = anomalies_display.sort_values('anomaly_score', ascending=False)
         
         # Show select box for anomaly selection
+        def format_anomaly_option(x):
+            try:
+                score = anomalies_display.loc[x, 'anomaly_score']
+                if isinstance(score, (int, float)):
+                    return f"Anomaly {x} (Score: {score:.3f})"
+                else:
+                    return f"Anomaly {x} (Score: {score})"
+            except Exception:
+                return f"Anomaly {x} (Score: N/A)"
+                
         selected_index = st.selectbox(
             "Select anomaly to explain",
             options=anomalies_display.index.tolist(),
-            format_func=lambda x: f"Anomaly {x} (Score: {anomalies_display.loc[x, 'anomaly_score']:.3f})"
+            format_func=format_anomaly_option
         )
         
         # Show the selected anomaly
         st.write("Selected anomaly details:")
-        st.dataframe(anomalies_display.loc[[selected_index]], use_container_width=True)
+        # Clean dataframe for Arrow compatibility
+        anomaly_display = clean_dataframe_for_arrow(anomalies_display.loc[[selected_index]])
+        st.dataframe(anomaly_display, use_container_width=True)
         
         # Generate explanation when button is clicked
         if st.button("Generate Explanation"):
@@ -246,7 +274,8 @@ def show_explain_feedback():
                             }).sort_values("Importance", ascending=False)
                             
                             st.write("Feature importance values:")
-                            st.dataframe(importance_df, use_container_width=True)
+                            importance_clean = clean_dataframe_for_arrow(importance_df)
+                            st.dataframe(importance_clean, use_container_width=True)
                             
                         except Exception as e:
                             st.error(f"SHAP explainer error: {str(e)}")
@@ -343,8 +372,9 @@ def show_explain_feedback():
                     
                     # Display the context
                     st.write("Context (surrounding records):")
+                    context_clean = clean_dataframe_for_arrow(context_df[display_cols])
                     st.dataframe(
-                        context_df[display_cols],
+                        context_clean,
                         use_container_width=True,
                         height=300
                     )
@@ -452,9 +482,17 @@ def show_explain_feedback():
                     src_port_col = next((col for col in ['tcp_srcport', 'udp_srcport', 'tcp.srcport', 'udp.srcport'] if col in row.index), None)
                     dst_port_col = next((col for col in ['tcp_dstport', 'udp_dstport', 'tcp.dstport', 'udp.dstport'] if col in row.index), None)
                     if src_port_col:
-                        st.write(f"• **Source Port:** {row.get(src_port_col, 'N/A')}")
+                        src_port = row.get(src_port_col)
+                        if pd.notna(src_port) and src_port != '':
+                            st.write(f"• **Source Port:** {src_port}")
+                        else:
+                            st.write("• **Source Port:** N/A")
                     if dst_port_col:
-                        st.write(f"• **Destination Port:** {row.get(dst_port_col, 'N/A')}")
+                        dst_port = row.get(dst_port_col)
+                        if pd.notna(dst_port) and dst_port != '':
+                            st.write(f"• **Destination Port:** {dst_port}")
+                        else:
+                            st.write("• **Destination Port:** N/A")
                 
                 with col2:
                     st.write("**Anomaly Details:**")
@@ -508,12 +546,35 @@ def show_explain_feedback():
                     
                     # Display key info as a nice table
                     if key_info:
-                        key_df = pd.DataFrame(list(key_info.items()), columns=['Field', 'Value'])
+                        # Convert values to string to avoid Arrow serialization issues
+                        key_info_clean = {}
+                        for k, v in key_info.items():
+                            if pd.isna(v):
+                                key_info_clean[k] = 'N/A'
+                            elif isinstance(v, (pd.Timestamp, datetime)):
+                                key_info_clean[k] = str(v)
+                            else:
+                                key_info_clean[k] = str(v)
+                        
+                        key_df = pd.DataFrame(list(key_info_clean.items()), columns=['Field', 'Value'])
                         st.dataframe(key_df, use_container_width=True, hide_index=True)
                     
                     # Show full raw data
                     st.markdown("**📊 Complete Raw Data:**")
-                    st.dataframe(row[display_cols].to_frame().T, use_container_width=True)
+                    # Convert problematic data types to avoid Arrow issues
+                    display_data = row[display_cols].copy()
+                    for col in display_data.index:
+                        val = display_data[col]
+                        if pd.isna(val):
+                            display_data[col] = 'N/A'
+                        elif isinstance(val, (pd.Timestamp, datetime)):
+                            display_data[col] = str(val)
+                        elif isinstance(val, (list, dict, np.ndarray)):
+                            display_data[col] = str(val)
+                        elif hasattr(val, 'dtype') and 'object' in str(val.dtype):
+                            display_data[col] = str(val)
+                    
+                    st.dataframe(display_data.to_frame().T, use_container_width=True)
                 
                 # Check if we already have feedback for this anomaly
                 existing_feedback = st.session_state.feedback.get(idx, {})
@@ -606,8 +667,26 @@ def show_explain_feedback():
                     # Store feedback in session state
                     st.session_state.feedback[idx] = feedback_entry
                     
-                    # Save feedback to file
-                    save_feedback(feedback_entry)
+                    # Save feedback using unified feedback manager
+                    from core.feedback_manager import FeedbackManager
+                    feedback_manager = FeedbackManager()
+                    
+                    # Convert feedback entry to the format expected by FeedbackManager
+                    feedback_data = {
+                        "classification": feedback_entry.get("classification"),
+                        "priority": feedback_entry.get("priority"),
+                        "technique": feedback_entry.get("technique"),
+                        "action_taken": feedback_entry.get("action_taken"),
+                        "comments": feedback_entry.get("comments"),
+                        "analyst": feedback_entry.get("analyst"),
+                        "anomaly_score": feedback_entry.get("anomaly_score"),
+                        "risk_score": feedback_entry.get("risk_score"),
+                        "risk_level": feedback_entry.get("risk_level")
+                    }
+                    
+                    # Use anomaly_id as the key, with fallback to index
+                    anomaly_id = feedback_entry.get("anomaly_id", f"anomaly_{idx}")
+                    feedback_manager.add_feedback(str(anomaly_id), feedback_data)
                     
                     st.success("Feedback saved successfully!")
         
@@ -623,7 +702,8 @@ def show_explain_feedback():
                 feedback_df = feedback_df.sort_values('timestamp', ascending=False)
             
             # Display feedback
-            st.dataframe(feedback_df, use_container_width=True)
+            feedback_clean = clean_dataframe_for_arrow(feedback_df)
+            st.dataframe(feedback_clean, use_container_width=True)
             
             # Model Retraining Section
             st.subheader("Model Retraining")
@@ -1181,8 +1261,9 @@ def show_explain_feedback():
                                     available_cols = [col for col in threat_cols if col in enriched_anomalies.columns]
                                     
                                     display_cols = list(enriched_anomalies.columns[:5]) + available_cols
+                                    high_threat_clean = clean_dataframe_for_arrow(high_threat[display_cols])
                                     st.dataframe(
-                                        high_threat[display_cols], 
+                                        high_threat_clean, 
                                         use_container_width=True
                                     )
                                     
@@ -1237,11 +1318,18 @@ def show_explain_feedback():
                         model_type = type(model).__name__ if model else "Unknown"
                         anomaly_score = anomalies.iloc[selected_anomaly_idx].get('anomaly_score', 0.0)
                         
+                        # Get filtered feature data for the anomalies and find positional index
+                        feature_data = df[feature_names]
+                        anomaly_feature_data = feature_data.loc[anomalies.index]
+                        
+                        # Convert DataFrame index to positional index for explanation functions
+                        positional_idx = selected_anomaly_idx  # This is already the position in the anomalies list
+                        
                         # Display enhanced explanations
                         display_enhanced_explanations(
                             model=model,
-                            X=df[feature_names],
-                            instance_idx=anomaly_row_idx,
+                            X=anomaly_feature_data,
+                            instance_idx=positional_idx,
                             feature_names=feature_names,
                             model_type=model_type,
                             anomaly_score=anomaly_score
@@ -1256,6 +1344,12 @@ def show_explain_feedback():
                 if time_col:
                     st.write(f"Using time column: **{time_col}**")
                     
+                    # Verify the column actually exists in current data
+                    if time_col not in df.columns:
+                        st.error(f"Time column '{time_col}' was detected but not found in current data. Available columns: {list(df.columns)}")
+                        time_col = None
+                
+                if time_col:
                     # Forecast anomaly trends
                     forecast_hours = st.slider("Forecast horizon (hours):", 1, 72, 24, key="forecast_hours")
                     
@@ -1294,82 +1388,90 @@ def show_explain_feedback():
                                 # Overall forecast confidence
                                 confidence = forecast_data.get('confidence', 0.0)
                                 st.metric("Forecast Confidence", f"{confidence:.1%}")
-                    
-                    # Risk escalation predictions
-                    st.write("#### 🚨 Risk Escalation Analysis")
-                    
-                    if st.button("⚠️ Analyze Risk Escalation Patterns"):
-                        with st.spinner("Analyzing risk escalation patterns..."):
-                            # Simple risk escalation analysis based on anomaly trends
-                            if not anomalies.empty and time_col in anomalies.columns:
-                                # Group anomalies by time periods
-                                anomalies_with_time = anomalies.copy()
-                                anomalies_with_time[time_col] = pd.to_datetime(anomalies_with_time[time_col])
+                
+                # Risk escalation predictions (regardless of time column availability)
+                st.write("#### 🚨 Risk Escalation Analysis")
+                
+                if st.button("⚠️ Analyze Risk Escalation Patterns"):
+                    with st.spinner("Analyzing risk escalation patterns..."):
+                        # Simple risk escalation analysis based on anomaly trends
+                        if not anomalies.empty and time_col and time_col in anomalies.columns:
+                            # Group anomalies by time periods
+                            anomalies_with_time = anomalies.copy()
+                            anomalies_with_time[time_col] = pd.to_datetime(anomalies_with_time[time_col])
+                            
+                            # Calculate hourly anomaly counts
+                            hourly_counts = anomalies_with_time.groupby(
+                                anomalies_with_time[time_col].dt.floor('H')
+                            ).size()
+                            
+                            if len(hourly_counts) > 1:
+                                # Calculate trend
+                                x = np.arange(len(hourly_counts))
+                                trend_coef = np.polyfit(x, hourly_counts.values, 1)[0]
                                 
-                                # Calculate hourly anomaly counts
-                                hourly_counts = anomalies_with_time.groupby(
-                                    anomalies_with_time[time_col].dt.floor('H')
-                                ).size()
-                                
-                                if len(hourly_counts) > 1:
-                                    # Calculate trend
-                                    x = np.arange(len(hourly_counts))
-                                    trend_coef = np.polyfit(x, hourly_counts.values, 1)[0]
-                                    
-                                    if trend_coef > 0.1:
-                                        st.warning(f"⚠️ **Escalating Risk Detected**: Anomaly count increasing by {trend_coef:.2f} per hour")
-                                        st.write("**Recommended Actions:**")
-                                        st.write("- Increase monitoring frequency")
-                                        st.write("- Prepare incident response team")
-                                        st.write("- Review recent security events")
-                                    elif trend_coef < -0.1:
-                                        st.success(f"✅ **Risk De-escalation**: Anomaly count decreasing by {abs(trend_coef):.2f} per hour")
-                                    else:
-                                        st.info("📊 **Stable Risk Level**: No significant trend in anomaly frequency")
-                                    
-                                    # Visualize trend
-                                    import plotly.express as px
-                                    
-                                    trend_fig = px.line(
-                                        x=hourly_counts.index,
-                                        y=hourly_counts.values,
-                                        title="Anomaly Count Trend",
-                                        labels={'x': 'Time', 'y': 'Anomaly Count'}
-                                    )
-                                    
-                                    # Add trend line
-                                    trend_line = trend_coef * x + hourly_counts.values[0]
-                                    trend_fig.add_scatter(
-                                        x=hourly_counts.index,
-                                        y=trend_line,
-                                        mode='lines',
-                                        name='Trend',
-                                        line=dict(dash='dash', color='red')
-                                    )
-                                    
-                                    st.plotly_chart(trend_fig, use_container_width=True)
+                                if trend_coef > 0.1:
+                                    st.warning(f"⚠️ **Escalating Risk Detected**: Anomaly count increasing by {trend_coef:.2f} per hour")
+                                    st.write("**Recommended Actions:**")
+                                    st.write("- Increase monitoring frequency")
+                                    st.write("- Prepare incident response team")
+                                    st.write("- Review recent security events")
+                                elif trend_coef < -0.1:
+                                    st.success(f"✅ **Risk De-escalation**: Anomaly count decreasing by {abs(trend_coef):.2f} per hour")
                                 else:
-                                    st.info("Insufficient temporal data for risk escalation analysis")
+                                    st.info("📊 **Stable Risk Level**: No significant trend in anomaly frequency")
+                                
+                                # Visualize trend
+                                import plotly.express as px
+                                
+                                trend_fig = px.line(
+                                    x=hourly_counts.index,
+                                    y=hourly_counts.values,
+                                    title="Anomaly Count Trend",
+                                    labels={'x': 'Time', 'y': 'Anomaly Count'}
+                                )
+                                
+                                # Add trend line
+                                trend_line = trend_coef * x + hourly_counts.values[0]
+                                trend_fig.add_scatter(
+                                    x=hourly_counts.index,
+                                    y=trend_line,
+                                    mode='lines',
+                                    name='Trend',
+                                    line=dict(dash='dash', color='red')
+                                )
+                                
+                                st.plotly_chart(trend_fig, use_container_width=True)
                             else:
-                                st.info("No anomalies or time data available for risk escalation analysis")
+                                st.info("Insufficient temporal data for risk escalation analysis")
+                        else:
+                            st.info("⚠️ Risk escalation analysis requires temporal data. Please ensure your data contains a time column.")
                 else:
-                    st.warning("No timestamp column found in data. Predictive analytics requires temporal information.")
+                    st.warning("⚠️ No suitable time column found in the data. Forecasting is not available.")
+                    st.info("💡 **Tip**: Ensure your data has a column with timestamp information (e.g., 'timestamp', 'frame.time', 'datetime', etc.)")
         
         else:
             st.info("💡 Enhanced features (Threat Intelligence, Behavioral Analytics, Predictive Analytics) are not available. Install required dependencies to enable these features.")
 
 def save_feedback(feedback_entry):
     """Save feedback to a file."""
+    # Load config to get proper paths
+    from core.config_loader import load_config
+    config = load_config()
+    
+    # Get feedback storage directory from config
+    feedback_dir = config.get('feedback', {}).get('storage_dir', 'data/feedback')
+    
     # Create feedback directory if it doesn't exist
-    os.makedirs("feedback", exist_ok=True)
+    os.makedirs(feedback_dir, exist_ok=True)
     
     # Create filename based on date
     date_str = datetime.now().strftime("%Y-%m-%d")
-    filename = f"feedback/feedback_{date_str}.json"
+    filename = os.path.join(feedback_dir, f"feedback_{date_str}.json")
     
     # Load existing feedback if file exists
     if os.path.exists(filename):
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             try:
                 feedback_data = json.load(f)
             except json.JSONDecodeError:
@@ -1381,7 +1483,7 @@ def save_feedback(feedback_entry):
     feedback_data["feedback"].append(feedback_entry)
     
     # Save feedback to file
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding='utf-8') as f:
         json.dump(feedback_data, f, indent=4)
 
 def create_sample_mitre_data():
@@ -1553,9 +1655,10 @@ def create_sample_mitre_data():
         ]
     }
     
-    # Create config directory if it doesn't exist
-    os.makedirs("config", exist_ok=True)
+    # Get config directory path and create if it doesn't exist
+    config_dir = "config"  # This is correct as it's for configuration files
+    os.makedirs(config_dir, exist_ok=True)
     
     # Save sample data to file
-    with open("config/mitre_attack_data.json", 'w') as f:
+    with open("config/mitre_attack_data.json", 'w', encoding='utf-8') as f:
         json.dump(sample_data, f, indent=4)

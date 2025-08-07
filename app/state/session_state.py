@@ -97,7 +97,7 @@ def load_json_file(file_path):
     Returns None if loading/processing fails.
     """
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         # Ensure session state dictionaries exist
